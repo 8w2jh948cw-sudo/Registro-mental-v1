@@ -1,0 +1,48 @@
+name: Publicar Registro Mental V1
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-v1"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout da V1
+        uses: actions/checkout@v4
+
+      - name: Buscar somente a fonte congelada da migração inicial
+        uses: actions/checkout@v4
+        with:
+          repository: 8w2jh948cw-sudo/Registro-mental-pwa
+          ref: 0b6094c7b78debd00f2a8ca327087f73966a17c0
+          path: _legacy
+          persist-credentials: false
+
+      - name: Montar base limpa 1.0.0
+        run: python3 build_v1.py
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar site consolidado
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
