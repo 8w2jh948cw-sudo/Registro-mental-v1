@@ -1,35 +1,52 @@
-/* Registro Mental V1 — símbolo de brilho padrão */
+/* Registro Mental V1 — ícone de duas estrelas + peso fixo dos ícones */
 (() => {
-  const ICON = `<svg class="svg-icon rm-spark-custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21.7734 24.9609" width="24" height="24" aria-hidden="true" focusable="false">
-    <g>
+  const ICON = `<svg class="svg-icon rm-spark-custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21.7734 24.9609" width="24" height="24" aria-hidden="true" focusable="false" stroke="none">
+    <g stroke="none">
       <rect height="24.9609" opacity="0" width="21.7734" x="0" y="0"/>
-      <path d="M4.36719 16.25C4.17969 16.25 4.04688 16.3672 4.02344 16.5625C3.61719 19.6875 3.51562 19.7188 0.34375 20.2578C0.125 20.2891 0 20.4062 0 20.6016C0 20.7969 0.125 20.9062 0.304688 20.9375C3.5 21.5547 3.61719 21.5234 4.02344 24.625C4.04688 24.8359 4.17969 24.9609 4.36719 24.9609C4.54688 24.9609 4.6875 24.8359 4.71094 24.6328C5.13281 21.4844 5.21875 21.4375 8.42188 20.9375C8.60156 20.9141 8.72656 20.7969 8.72656 20.6016C8.72656 20.4141 8.60156 20.2891 8.42188 20.2578C5.21875 19.6406 5.14062 19.6719 4.71094 16.5469C4.6875 16.3672 4.54688 16.25 4.36719 16.25Z" fill="currentColor" fill-opacity="0.85"/>
-      <path d="M12.2578 3.29688C11.9766 3.29688 11.7734 3.49219 11.7422 3.77344C10.8828 10.3359 10.0703 11.0547 3.64062 11.8828C3.35156 11.9141 3.14844 12.125 3.14844 12.3984C3.14844 12.6797 3.35156 12.8906 3.64062 12.9219C10.0938 13.5859 10.9531 14.4609 11.7422 21.0234C11.7734 21.3047 11.9766 21.5078 12.2578 21.5078C12.5312 21.5078 12.7422 21.3047 12.7812 21.0234C13.5781 14.4609 14.4297 13.5859 20.875 12.9219C21.1719 12.8906 21.3672 12.6797 21.3672 12.3984C21.3672 12.125 21.1719 11.9141 20.875 11.8828C14.4297 11.2109 13.5781 10.3359 12.7812 3.77344C12.7422 3.49219 12.5312 3.29688 12.2578 3.29688Z" fill="currentColor" fill-opacity="0.85"/>
+      <path d="M4.36719 16.25C4.17969 16.25 4.04688 16.3672 4.02344 16.5625C3.61719 19.6875 3.51562 19.7188 0.34375 20.2578C0.125 20.2891 0 20.4062 0 20.6016C0 20.7969 0.125 20.9062 0.304688 20.9375C3.5 21.5547 3.61719 21.5234 4.02344 24.625C4.04688 24.8359 4.17969 24.9609 4.36719 24.9609C4.54688 24.9609 4.6875 24.8359 4.71094 24.6328C5.13281 21.4844 5.21875 21.4375 8.42188 20.9375C8.60156 20.9141 8.72656 20.7969 8.72656 20.6016C8.72656 20.4141 8.60156 20.2891 8.42188 20.2578C5.21875 19.6406 5.14062 19.6719 4.71094 16.5469C4.6875 16.3672 4.54688 16.25 4.36719 16.25Z" fill="currentColor" fill-opacity="0.85" stroke="none"/>
+      <path d="M12.2578 3.29688C11.9766 3.29688 11.7734 3.49219 11.7422 3.77344C10.8828 10.3359 10.0703 11.0547 3.64062 11.8828C3.35156 11.9141 3.14844 12.125 3.14844 12.3984C3.14844 12.6797 3.35156 12.8906 3.64062 12.9219C10.0938 13.5859 10.9531 14.4609 11.7422 21.0234C11.7734 21.3047 11.9766 21.5078 12.2578 21.5078C12.5312 21.5078 12.7422 21.3047 12.7812 21.0234C13.5781 14.4609 14.4297 13.5859 20.875 12.9219C21.1719 12.8906 21.3672 12.6797 21.3672 12.3984C21.3672 12.125 21.1719 11.9141 20.875 11.8828C14.4297 11.2109 13.5781 10.3359 12.7812 3.77344C12.7422 3.49219 12.5312 3.29688 12.2578 3.29688Z" fill="currentColor" fill-opacity="0.85" stroke="none"/>
     </g>
   </svg>`;
 
-  function ensureCleanStyle() {
-    if (document.getElementById('rm-spark-clean-style')) return;
+  function ensureIconStyle() {
+    if (document.getElementById('rm-icon-weight-removal')) return;
     const style = document.createElement('style');
-    style.id = 'rm-spark-clean-style';
+    style.id = 'rm-icon-weight-removal';
     style.textContent = `
-      [data-rm-spark-icon="1"],
-      [data-rm-spark-icon="1"] .rm-spark-custom,
-      [data-rm-spark-icon="1"] .rm-spark-custom * {
-        filter: none !important;
-        -webkit-filter: none !important;
-        text-shadow: none !important;
-        box-shadow: none !important;
-      }
-      [data-rm-spark-icon="1"] .rm-spark-custom,
-      [data-rm-spark-icon="1"] .rm-spark-custom * {
-        outline: none !important;
-        -webkit-text-stroke: 0 !important;
+      html { --icon-stroke: 2 !important; }
+      .rm-spark-custom,
+      .rm-spark-custom * {
         stroke: none !important;
         stroke-width: 0 !important;
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function removeIconWeightSetting() {
+    const control = document.getElementById('iconWeightControl');
+    const block = control?.closest('.setting-block');
+    if (block) {
+      const next = block.nextElementSibling;
+      const prev = block.previousElementSibling;
+      if (next?.classList.contains('setting-separator')) next.remove();
+      else if (prev?.classList.contains('setting-separator')) prev.remove();
+      block.remove();
+    }
+
+    try {
+      const key = 'registro-settings-v2';
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const settings = JSON.parse(raw);
+        if ('iconWeight' in settings) {
+          delete settings.iconWeight;
+          localStorage.setItem(key, JSON.stringify(settings));
+        }
+      }
+    } catch (_) {}
+
+    document.documentElement.dataset.iconWeight = 'regular';
   }
 
   function replaceHolder(holder) {
@@ -39,19 +56,20 @@
     holder.innerHTML = ICON;
   }
 
-  function applySparkIcons() {
-    ensureCleanStyle();
+  function applyChanges() {
+    ensureIconStyle();
+    removeIconWeightSetting();
     document.querySelectorAll('[data-icon="spark"]').forEach(replaceHolder);
     const learningTab = document.querySelector('[data-tab="learning"]');
     if (learningTab) replaceHolder(learningTab.querySelector('[data-icon]') || learningTab.querySelector('span'));
   }
 
-  applySparkIcons();
-  document.addEventListener('DOMContentLoaded', applySparkIcons, { once: true });
-  new MutationObserver(applySparkIcons).observe(document.documentElement, {
+  applyChanges();
+  document.addEventListener('DOMContentLoaded', applyChanges, { once: true });
+  new MutationObserver(applyChanges).observe(document.documentElement, {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['data-icon']
+    attributeFilter: ['data-icon', 'data-icon-weight']
   });
 })();
