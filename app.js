@@ -189,11 +189,23 @@
       }
     } catch (_) {}
 
-    document.documentElement.dataset.iconWeight = 'regular';
+    if (document.documentElement.dataset.iconWeight !== 'regular') {
+      document.documentElement.dataset.iconWeight = 'regular';
+    }
   }
 
   function replaceHolder(holder) {
     if (!holder) return;
+
+    // Fundamental: não redesenhar o SVG quando ele já está correto.
+    // Sem esta proteção o MutationObserver observava a própria alteração e
+    // entrava em um ciclo contínuo no Safari/PWA.
+    if (holder.querySelector('.rm-spark-custom')) {
+      holder.dataset.rmSparkIcon = '1';
+      if (holder.hasAttribute('data-icon')) holder.removeAttribute('data-icon');
+      return;
+    }
+
     holder.dataset.rmSparkIcon = '1';
     holder.removeAttribute('data-icon');
     holder.innerHTML = ICON;
@@ -204,15 +216,27 @@
     removeIconWeightSetting();
     document.querySelectorAll('[data-icon="spark"]').forEach(replaceHolder);
     const learningTab = document.querySelector('[data-tab="learning"]');
-    if (learningTab) replaceHolder(learningTab.querySelector('[data-icon]') || learningTab.querySelector('span'));
+    if (learningTab) {
+      replaceHolder(learningTab.querySelector('[data-icon]') || learningTab.querySelector('span'));
+    }
+  }
+
+  let scheduled = false;
+  function scheduleApply() {
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      applyChanges();
+    });
   }
 
   applyChanges();
   document.addEventListener('DOMContentLoaded', applyChanges, { once: true });
-  new MutationObserver(applyChanges).observe(document.documentElement, {
+  new MutationObserver(scheduleApply).observe(document.documentElement, {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['data-icon', 'data-icon-weight']
+    attributeFilter: ['data-icon']
   });
 })();
