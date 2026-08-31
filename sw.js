@@ -1,4 +1,4 @@
-const CACHE='registro-v1-1.0.3';
+const CACHE='registro-v1-1.0.4';
 const CORE=['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./release-guard.js'];
 
 self.addEventListener('install',event=>{
