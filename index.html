@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Registro">
+  <title>Registro</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=1.0.1">
+  <link rel="stylesheet" href="./styles.css?v=1.0.1">
+</head>
+<body>
+  <div class="app-shell">
+    <main class="content" id="content">
+      <section class="view active" data-view="home">
+        <header class="page-header home-header">
+          <div>
+            <p class="eyebrow"><span id="dateLabel">Hoje</span><span class="version-inline" id="topVersion">v1.0.1</span></p>
+            <h1>Registro</h1>
+          </div>
+          <button class="round-button" id="homeOptionsBtn" aria-label="Abrir ajustes">•••</button>
+        </header>
+
+        <section class="summary-card compact-summary" aria-labelledby="summaryTitle">
+          <div class="card-heading-row compact-heading"><div><p class="section-kicker">HOJE</p><h2 id="summaryTitle">Resumo do dia</h2></div></div>
+          <div class="summary-list compact-summary-list" id="summaryList"></div>
+        </section>
+
+        <section class="action-section" aria-labelledby="quickActionsTitle">
+          <div class="section-title-row"><h2 id="quickActionsTitle">Adicionar</h2></div>
+          <div class="action-grid">
+            <button class="action-card primary-action" data-type="note"><span class="action-icon" data-icon="note"></span><span class="action-copy"><strong>Anotação</strong><small>Texto e estado emocional</small></span><span class="action-plus">+</span></button>
+            <button class="action-card compact-action med-action" data-type="medication"><span class="action-icon" data-icon="pill"></span><strong>Medicamento</strong></button>
+            <button class="action-card compact-action sleep-action" data-type="sleep"><span class="action-icon" data-icon="moon"></span><strong>Sono</strong></button>
+            <button class="action-card compact-action buy-action" data-type="purchase"><span class="action-icon" data-icon="bag"></span><strong>Compra</strong></button>
+          </div>
+        </section>
+
+        <section class="recent-section" aria-labelledby="recentTitle">
+          <div class="section-divider"></div>
+          <div class="section-title-row"><div><p class="section-kicker">REGISTROS</p><h2 id="recentTitle">Mais recentes</h2></div><button class="link-button" data-go="history">Ver todos</button></div>
+          <div class="timeline" id="homeTimeline"></div>
+          <div class="empty-state hidden" id="homeEmpty">Nenhum registro neste dia.</div>
+        </section>
+      </section>
+
+      <section class="view" data-view="history">
+        <header class="page-header"><div><p class="eyebrow">Todos os registros</p><h1>Histórico</h1></div></header>
+        <div class="filter-scroll" id="historyFilters"><button class="filter-chip selected" data-filter="all">Tudo</button><button class="filter-chip" data-filter="note">Anotações</button><button class="filter-chip" data-filter="medication">Medicamentos</button><button class="filter-chip" data-filter="sleep">Sono</button><button class="filter-chip" data-filter="purchase">Compras</button></div>
+        <div class="history-list" id="historyList"></div>
+        <div class="empty-state hidden" id="historyEmpty">Nenhum registro para este filtro.</div>
+      </section>
+
+      <section class="view" data-view="analysis">
+        <header class="page-header"><div><p class="eyebrow">Leitura dos seus registros</p><h1>Análises</h1></div></header>
+        <div class="notice-card"><span class="notice-icon" data-icon="spark"></span><div><strong>Análise baseada nos registros</strong><p>O app cruza horários, repetição e proximidade temporal. Ele não afirma causalidade nem substitui interpretação clínica.</p></div></div>
+        <section class="analysis-card prominent-analysis"><p class="section-kicker">AGORA</p><h2>Análise atual</h2><div id="currentAnalysis" class="analysis-stack"></div></section>
+        <section class="analysis-card"><div class="analysis-title"><span data-icon="link"></span><h2>Associações temporais</h2></div><div id="associationAnalysis" class="analysis-stack"></div></section>
+        <section class="analysis-card"><div class="analysis-title"><span data-icon="moon"></span><h2>Sono</h2></div><div id="sleepAnalysis" class="metric-grid"></div></section>
+        <section class="analysis-card"><div class="analysis-title"><span data-icon="pill"></span><h2>Medicamentos</h2></div><div id="medicationAnalysis" class="analysis-stack"></div></section>
+        <section class="analysis-card"><div class="analysis-title"><span data-icon="bag"></span><h2>Compras</h2></div><div id="purchaseAnalysis" class="analysis-stack"></div></section>
+      </section>
+
+      <section class="view" data-view="settings">
+        <header class="page-header"><div><p class="eyebrow">Preferências e dados</p><h1>Ajustes</h1></div></header>
+
+        <section class="settings-group"><h2>Aparência</h2><div class="settings-card">
+          <div class="setting-block"><div class="setting-label"><strong>Tema</strong><small>Claro, escuro ou seguindo o iPhone</small></div><div class="segmented animated-segmented" id="themeControl"><button data-theme-value="system">Sistema</button><button data-theme-value="light">Claro</button><button data-theme-value="dark">Escuro</button></div></div>
+          <div class="setting-separator"></div>
+          <div class="setting-block"><div class="setting-label"><strong>Cor principal</strong><small>Usada em seleção e destaque</small></div><div class="accent-options" id="accentControl"><button data-accent="violet" aria-label="Lilás"></button><button data-accent="blue" aria-label="Azul"></button><button data-accent="green" aria-label="Verde"></button></div></div>
+          <div class="setting-separator"></div>
+          <div class="setting-block"><div class="setting-label"><strong>Tamanho dos ícones</strong><small>Ajusta os ícones principais do app</small></div><div class="segmented animated-segmented" id="iconSizeControl"><button data-icon-size="small">P</button><button data-icon-size="medium">M</button><button data-icon-size="large">G</button></div></div>
+          <div class="setting-separator"></div>
+          <div class="setting-block"><div class="setting-label"><strong>Espessura dos ícones</strong><small>Mais delicado ou mais marcado</small></div><div class="segmented animated-segmented" id="iconWeightControl"><button data-icon-weight="light">Leve</button><button data-icon-weight="regular">Normal</button><button data-icon-weight="bold">Forte</button></div></div>
+          <div class="setting-separator"></div>
+          <div class="setting-block"><div class="setting-label"><strong>Tipografia</strong><small>Fonte padrão do iPhone ou Inter</small></div><div class="segmented animated-segmented" id="fontFamilyControl"><button data-font-family="system">Sistema</button><button data-font-family="inter">Inter</button></div></div>
+          <div class="setting-separator"></div>
+          <div class="setting-block"><div class="setting-label"><strong>Peso base da fonte</strong><small>Afeta textos comuns sem destruir a hierarquia</small></div><div class="segmented animated-segmented" id="fontWeightControl"><button data-font-weight="400">Regular</button><button data-font-weight="500">Médio</button><button data-font-weight="600">Forte</button></div></div>
+          <div class="setting-separator"></div>
+          <div class="setting-inline"><div class="setting-label no-margin"><strong>Mostrar versão no topo</strong><small>Exibe a versão atual ao lado da data</small></div><button class="switch-control" id="showVersionToggle" role="switch" aria-checked="true"><span></span></button></div>
+        </div></section>
+
+        <section class="settings-group"><h2>Medicamentos</h2><div class="settings-card list-card">
+          <button class="settings-row" id="medicationRegistryBtn"><span class="settings-row-icon" data-icon="pill"></span><span><strong>Cadastro de medicamentos</strong><small>Princípio ativo, apresentações, custos, duração e anotações</small></span><span class="chevron">›</span></button>
+        </div></section>
+
+        <section class="settings-group"><h2>Saúde e sono</h2><div class="settings-card list-card">
+          <button class="settings-row" id="healthImportInfoBtn"><span class="settings-row-icon health-icon" data-icon="heart"></span><span><strong>Apple Saúde via Atalho</strong><small id="healthStatusText">Não configurado neste aparelho</small></span><span class="chevron">›</span></button>
+          <div class="setting-separator inset"></div>
+          <div class="setting-block"><div class="setting-label"><strong>Ao receber um sono do Atalho</strong><small>Você continua podendo corrigir horários e informações</small></div><div class="segmented animated-segmented three-wide" id="healthImportModeControl"><button data-health-mode="auto">Auto</button><button data-health-mode="review">Revisar</button><button data-health-mode="ask">Perguntar</button></div></div>
+        </div></section>
+
+        <section class="settings-group"><h2>Personalização avançada</h2><div class="settings-card list-card">
+          <button class="settings-row" id="customIconsBtn"><span class="settings-row-icon" data-icon="spark"></span><span><strong>Substituir ícones</strong><small>Código do banco interno ou arquivo SVG</small></span><span class="chevron">›</span></button>
+          <div class="setting-separator inset"></div>
+          <div class="setting-inline"><div class="setting-label no-margin"><strong>Ocultar textos da barra inferior</strong><small>Os ícones ficam maiores e centralizados</small></div><button class="switch-control" id="hideTabLabelsToggle" role="switch" aria-checked="false"><span></span></button></div>
+          <div class="setting-separator"></div>
+          <button class="settings-row" id="tabbarLabBtn"><span class="settings-row-icon" data-icon="settings"></span><span><strong>Laboratório da barra inferior</strong><small>Transparência, bolha, desfoque e tema</small></span><span class="chevron">›</span></button>
+        </div></section>
+
+        <section class="settings-group"><h2>Dados</h2><div class="backup-warning hidden" id="backupWarning"><span data-icon="export"></span><div><strong>Backup desatualizado</strong><small id="backupWarningText">Crie um novo backup para manter uma cópia externa dos registros.</small></div></div><div class="settings-card list-card">
+          <button class="settings-row" id="exportBtn"><span class="settings-row-icon" data-icon="export"></span><span><strong>Exportar dados</strong><small id="backupStatusText">Backup em JSON</small></span><span class="chevron">›</span></button>
+          <div class="setting-separator inset"></div>
+          <button class="settings-row" id="importBtn"><span class="settings-row-icon" data-icon="import"></span><span><strong>Importar dados</strong><small>Escolha entre substituir ou somar ao conteúdo atual</small></span><span class="chevron">›</span></button>
+        </div><p class="group-footnote">Os registros, medicamentos, configurações e SVGs personalizados entram no backup JSON.</p></section>
+
+        <section class="settings-group"><h2>Desenvolvimento</h2><div class="settings-card list-card">
+          <button class="settings-row no-icon" id="restoreDemoBtn"><span><strong>Restaurar dados fictícios</strong><small>Substitui os registros atuais pelos exemplos</small></span><span class="chevron">›</span></button>
+          <div class="setting-separator"></div>
+          <button class="settings-row no-icon danger-row" id="clearBtn"><span><strong>Apagar todos os dados locais</strong><small>Remove registros e cadastros deste navegador</small></span><span class="chevron">›</span></button>
+        </div></section>
+
+        <section class="settings-group about-group"><h2>Sobre</h2><div class="settings-card info-card"><div><span>Versão</span><strong id="versionLabel">1.0.1</strong></div><div><span>Armazenamento</span><strong>Local no aparelho</strong></div></div></section>
+      </section>
+    </main>
+
+    <nav class="tab-bar capsule-tabbar" aria-label="Navegação principal">
+      <span class="tab-bubble" id="tabBubble" aria-hidden="true"></span>
+      <button class="tab-item selected" data-tab="home"><span data-icon="home"></span><small>Início</small></button>
+      <button class="tab-item" data-tab="history"><span data-icon="history"></span><small>Histórico</small></button>
+      <button class="tab-item" data-tab="analysis"><span data-icon="chart"></span><small>Análises</small></button>
+      <button class="tab-item" data-tab="settings"><span data-icon="settings"></span><small>Ajustes</small></button>
+    </nav>
+  </div>
+
+  <div id="backdrop" class="backdrop" aria-hidden="true"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="grabber"></div><div class="sheet-header"><h2 id="sheetTitle">Novo registro</h2><button class="round-button sheet-close" id="closeBtn" aria-label="Fechar"><svg class="rm-close-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20.7578 20.3672" aria-hidden="true" focusable="false"><g><rect height="20.3672" opacity="0" width="20.7578" x="0" y="0"/><path d="M20.3516 10.1797C20.3516 15.7812 15.7812 20.3516 10.1719 20.3516C4.57031 20.3516 0 15.7812 0 10.1797C0 4.57031 4.57031 0 10.1719 0C15.7812 0 20.3516 4.57031 20.3516 10.1797ZM13.25 6.125L10.1819 9.17967L7.11719 6.125C6.96875 5.98438 6.80469 5.91406 6.60938 5.91406C6.20312 5.91406 5.88281 6.21875 5.88281 6.60938C5.88281 6.8125 5.96094 6.99219 6.10156 7.13281L9.16294 10.1942L6.10156 13.2422C5.96094 13.3906 5.88281 13.5625 5.88281 13.7578C5.88281 14.1562 6.20312 14.4766 6.60938 14.4766C6.8125 14.4766 6.98438 14.3984 7.13281 14.2578L10.1797 11.2109L13.2266 14.2578C13.3672 14.3984 13.5391 14.4766 13.75 14.4766C14.1484 14.4766 14.4688 14.1562 14.4688 13.7578C14.4688 13.5625 14.3984 13.3906 14.2578 13.2422L11.1981 10.1925L14.2578 7.13281C14.3984 6.99219 14.4688 6.8125 14.4688 6.60938C14.4688 6.21875 14.1484 5.91406 13.75 5.91406C13.5547 5.91406 13.3828 5.98438 13.25 6.125Z" fill="currentColor" fill-opacity="0.85"/></g></svg></button></div><form id="form"></form></section></div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <input type="file" id="svgImportFile" accept="image/svg+xml,.svg" hidden>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js?v=1.0.1"></script>
+</body>
+</html>
