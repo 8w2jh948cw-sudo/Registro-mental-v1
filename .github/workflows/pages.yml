@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RELEASE: "1.0.3"
+  RELEASE: "1.0.4"
 
 jobs:
   build-and-deploy:
@@ -38,7 +38,7 @@ jobs:
       - name: Montar base limpa
         run: python3 build_v1.py
 
-      - name: Aplicar atualização 1.0.3
+      - name: Aplicar atualização 1.0.4
         run: |
           sed -i "s/1\.0\.0/${RELEASE}/g" site/index.html site/app.js site/sw.js site/release-guard.js
           printf '\n' >> site/app.js
