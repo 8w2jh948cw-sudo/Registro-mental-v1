@@ -6,13 +6,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
   group: "pages-v1"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   RELEASE: "1.0.1"
@@ -43,6 +43,26 @@ jobs:
           sed -i "s/1\.0\.0/${RELEASE}/g" site/index.html site/app.js site/sw.js site/release-guard.js
           printf '\n' >> site/app.js
           cat v1-learning-icon.js >> site/app.js
+
+      - name: Sincronizar site na raiz do repositório
+        run: |
+          cp -f site/index.html ./index.html
+          cp -f site/styles.css ./styles.css
+          cp -f site/app.js ./app.js
+          cp -f site/manifest.webmanifest ./manifest.webmanifest
+          cp -f site/sw.js ./sw.js
+          cp -f site/release-guard.js ./release-guard.js
+          cp -f site/.nojekyll ./.nojekyll
+          for file in SHORTCUT-SLEEP.txt v04demo.js v04tabbar.js v04navicons.js tabbar-lab.html tabbar-editor.html dev-editor.html preview-escala-humor.html; do
+            [ -f "site/$file" ] && cp -f "site/$file" "./$file"
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html styles.css app.js manifest.webmanifest sw.js release-guard.js .nojekyll SHORTCUT-SLEEP.txt v04demo.js v04tabbar.js v04navicons.js tabbar-lab.html tabbar-editor.html dev-editor.html preview-escala-humor.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Sincroniza site publicado ${RELEASE} na raiz [skip ci]"
+            git push
+          fi
 
       - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
