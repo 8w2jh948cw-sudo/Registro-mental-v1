@@ -1,8 +1,10 @@
 # Registro Mental V1
 
-Nova base limpa do Registro Mental.
+Nova base consolidada do Registro Mental.
 
-- Versão inicial: 1.0.0
-- O site publicado não carrega a sequência histórica de módulos 0.4.x.
-- A interface principal é consolidada em poucos arquivos finais durante a publicação.
-- O repositório antigo é usado somente como fonte congelada da migração inicial; não é consultado pelo app durante o uso.
+- Série atual: 1.x
+- Versão atual: 1.0.2
+- Interface e dados locais preservados
+- Publicação: GitHub Pages
+
+O histórico completo das alterações permanece disponível pelos commits do repositório.
