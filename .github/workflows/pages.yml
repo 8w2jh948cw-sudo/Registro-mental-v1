@@ -14,6 +14,9 @@ concurrency:
   group: "pages-v1"
   cancel-in-progress: true
 
+env:
+  RELEASE: "1.0.1"
+
 jobs:
   build-and-deploy:
     environment:
@@ -32,8 +35,14 @@ jobs:
           path: _legacy
           persist-credentials: false
 
-      - name: Montar base limpa 1.0.0
+      - name: Montar base limpa
         run: python3 build_v1.py
+
+      - name: Aplicar atualização 1.0.1
+        run: |
+          sed -i "s/1\.0\.0/${RELEASE}/g" site/index.html site/app.js site/sw.js site/release-guard.js
+          printf '\n' >> site/app.js
+          cat v1-learning-icon.js >> site/app.js
 
       - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
