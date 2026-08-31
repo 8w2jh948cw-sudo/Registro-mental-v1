@@ -43,6 +43,7 @@ jobs:
           sed -i "s/1\.0\.0/${RELEASE}/g" site/index.html site/app.js site/sw.js site/release-guard.js
           printf '\n' >> site/app.js
           cat v1-learning-icon.js >> site/app.js
+          cp -f recover.html site/recover.html
 
       - name: Sincronizar site na raiz do repositório
         run: |
@@ -58,7 +59,7 @@ jobs:
           done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html styles.css app.js manifest.webmanifest sw.js release-guard.js .nojekyll SHORTCUT-SLEEP.txt v04demo.js v04tabbar.js v04navicons.js tabbar-lab.html tabbar-editor.html dev-editor.html preview-escala-humor.html
+          git add index.html styles.css app.js manifest.webmanifest sw.js release-guard.js .nojekyll SHORTCUT-SLEEP.txt v04demo.js v04tabbar.js v04navicons.js tabbar-lab.html tabbar-editor.html dev-editor.html preview-escala-humor.html recover.html
           if ! git diff --cached --quiet; then
             git commit -m "Sincroniza site publicado ${RELEASE} na raiz [skip ci]"
             git push
