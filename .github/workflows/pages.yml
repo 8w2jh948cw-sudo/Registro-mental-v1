@@ -35,8 +35,10 @@ jobs:
       - name: Montar base limpa 1.0.0
         run: python3 build_v1.py
 
-      - name: Configurar Pages
+      - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Enviar site consolidado
         uses: actions/upload-pages-artifact@v3
