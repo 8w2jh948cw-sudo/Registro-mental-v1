@@ -1,4 +1,4 @@
-name: Publicar Registro Mental V1
+name: Publicar Registro Mental
 
 on:
   push:
@@ -11,11 +11,13 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages-v1"
+  group: "pages-registro-mental"
   cancel-in-progress: true
 
 env:
-  RELEASE: "1.1.1"
+  STABLE_RELEASE: "1.1.1"
+  BETA_BUILD_RELEASE: "1.2.0"
+  BETA_LABEL: "1.2.0-beta.1"
 
 jobs:
   build-and-deploy:
@@ -24,32 +26,67 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout da V1
+      - name: Checkout do desenvolvimento
         uses: actions/checkout@v4
 
-      - name: Preparar release autossuficiente
-        run: python3 prepare_release.py
+      - name: Checkout da versão Oficial congelada
+        uses: actions/checkout@v4
+        with:
+          ref: stable
+          path: _stable
+          persist-credentials: false
 
-      - name: Conferir arquivos críticos
+      - name: Montar Beta a partir do desenvolvimento
+        run: |
+          RELEASE=${BETA_BUILD_RELEASE} python3 prepare_release.py
+          rm -rf _beta_site
+          mv site _beta_site
+
+      - name: Montar Oficial a partir da branch stable
+        run: |
+          cd _stable
+          RELEASE=${STABLE_RELEASE} python3 prepare_release.py
+          cd ..
+          rm -rf site
+          cp -a _stable/site site
+
+      - name: Criar ambientes isolados
+        run: |
+          python3 prepare_environments.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('site/beta/manifest.webmanifest')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          data['id']='./'
+          p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Conferir Oficial Beta e Diagnóstico
         run: |
           test -s site/index.html
           test -s site/boot.js
           test -s site/app.js
-          test -s site/patches.js
           test -s site/launch.html
           test -s site/safe.html
           test -s site/recover.html
-          grep -q 'rmBoot' site/index.html
-          grep -q "boot.js?v=${RELEASE}" site/index.html
-          ! grep -q 'navigator.serviceWorker.register' site/app.js
-          echo "Release ${RELEASE} validada antes da publicação."
+          test -s site/beta/index.html
+          test -s site/beta/app.js
+          test -s site/beta/beta-tools.js
+          test -s site/beta/beta-patches.js
+          test -s site/diagnostico/index.html
+          grep -q 'rmStableReleaseStamp' site/index.html
+          grep -q 'registro-mental-beta-v1' site/beta/app.js
+          ! grep -q "const DB_NAME='registro-mental-v1'" site/beta/app.js
+          grep -q 'DADOS ISOLADOS' site/diagnostico/index.html
+          echo "Oficial ${STABLE_RELEASE} congelado; Beta ${BETA_LABEL} isolada e pronta."
 
       - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - name: Enviar site
+      - name: Enviar site completo
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
