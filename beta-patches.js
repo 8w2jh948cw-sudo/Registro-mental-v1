@@ -60,6 +60,25 @@
         padding-left: 0 !important;
       }
 
+      /* Anotações: cabeçalho mais coeso e conteúdo com alinhamento óptico. */
+      .rm-v28-timeline.rm-type-note .rm-card-header-main {
+        gap: 5px !important;
+      }
+      .rm-v28-timeline.rm-type-note .timeline-main {
+        padding-left: 8px !important;
+      }
+      .rm-v28-timeline.rm-type-note .rm-card-header-main .rm-beta-header-mood {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        border-radius: 7px !important;
+        margin-left: 4px !important;
+        font-size: 12px !important;
+        line-height: 1 !important;
+        font-weight: 850 !important;
+        box-shadow: 0 0 6px var(--rm-mini-glow) !important;
+      }
+
       /* Tema: título e seletor em uma única linha mais compacta. */
       .setting-block.rm-beta-theme-row {
         display: grid !important;
@@ -363,6 +382,41 @@
     }
   }
 
+  function installNoteCardPatch() {
+    const original = window.eventCard;
+    if (typeof original !== 'function') return false;
+    if (original.__rmBetaNoteHeaderRefined) return true;
+
+    const wrapped = function(event, ...rest) {
+      const html = original.call(this, event, ...rest);
+      if (!event || event.type !== 'note' || event.moodScore == null) return html;
+
+      const template = document.createElement('template');
+      template.innerHTML = String(html).trim();
+      const card = template.content.firstElementChild;
+      if (!card) return html;
+
+      const header = card.querySelector('.rm-card-header-main');
+      const meta = card.querySelector('.rm-meta-badges');
+      const mood = meta?.querySelector('.rm-mini-mood');
+      if (header && mood) {
+        mood.classList.add('rm-beta-header-mood');
+        header.appendChild(mood);
+        if (meta && !meta.children.length && !meta.textContent.trim()) meta.remove();
+      }
+      return card.outerHTML;
+    };
+
+    wrapped.__rmBetaNoteHeaderRefined = true;
+    wrapped.__rmBetaOriginal = original;
+    window.eventCard = wrapped;
+
+    queueMicrotask(() => {
+      try { if (typeof window.renderAll === 'function') window.renderAll(); } catch (_) {}
+    });
+    return true;
+  }
+
   function installMedicationRegistryPatch() {
     const original = window.openMedicationRegistry;
     if (typeof original !== 'function') return false;
@@ -428,11 +482,12 @@
     refineSettingsUI();
     refineMedicationSheet();
 
+    const noteCardsReady = installNoteCardPatch();
     const registryReady = installMedicationRegistryPatch();
     const sheetReady = installMedicationSheetPatch();
     const doseReady = installDoseFieldsPatch();
 
-    if ((registryReady && sheetReady && doseReady) || attempts >= 200) {
+    if ((noteCardsReady && registryReady && sheetReady && doseReady) || attempts >= 200) {
       clearInterval(installer);
     }
   }, 75);
@@ -440,6 +495,7 @@
   document.addEventListener('registro:release-ready', () => {
     replaceCloseIcons();
     refineSettingsUI();
+    installNoteCardPatch();
     installMedicationRegistryPatch();
     installMedicationSheetPatch();
     installDoseFieldsPatch();
