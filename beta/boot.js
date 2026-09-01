@@ -1,4 +1,4 @@
-/* Registro Mental V1 — bootloader resiliente */
+/* Registro Mental V1 — bootloader resiliente e não bloqueante */
 (() => {
   'use strict';
 
@@ -30,6 +30,10 @@
   const nowMs = () => Math.round(performance.now() - STARTED);
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const twoPaints = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const withTimeout = (promise, ms, label) => Promise.race([
+    Promise.resolve(promise),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} excedeu ${ms} ms`)), ms))
+  ]);
 
   function log(kind, message, extra = '') {
     const entry = { t: nowMs(), kind, message, extra: extra ? String(extra) : '' };
@@ -41,10 +45,16 @@
   function setProgress(value) { if (progress) progress.style.width = `${Math.max(4, Math.min(100, value))}%`; }
   function setMessage(title, subtitle) { if (headline) headline.textContent = title; if (detail) detail.textContent = subtitle; }
 
-  async function getRuntimeState() {
-    let registrations = [], cacheKeys = [];
-    try { if ('serviceWorker' in navigator) registrations = (await navigator.serviceWorker.getRegistrations()).filter(reg => String(reg.scope || '').includes(scopeToken)); } catch (_) {}
-    try { if ('caches' in window) cacheKeys = (await caches.keys()).filter(key => key.startsWith('registro-v1-')); } catch (_) {}
+  async function inspectRuntime() {
+    let registrations = null, cacheKeys = null;
+    try {
+      if ('serviceWorker' in navigator) registrations = (await withTimeout(navigator.serviceWorker.getRegistrations(), 700, 'Consulta de Service Worker')).filter(reg => String(reg.scope || '').includes(scopeToken));
+      else registrations = [];
+    } catch (error) { log('warn', 'Consulta de Service Worker demorou demais', error.message); }
+    try {
+      if ('caches' in window) cacheKeys = (await withTimeout(caches.keys(), 700, 'Consulta de cache')).filter(key => key.startsWith('registro-v1-'));
+      else cacheKeys = [];
+    } catch (error) { log('warn', 'Consulta de cache demorou demais', error.message); }
     return { registrations, cacheKeys };
   }
 
@@ -52,25 +62,33 @@
     setStep('cache', 'active', 'limpando');
     let removedWorkers = 0, removedCaches = 0;
     try {
-      const before = await getRuntimeState();
-      if (before.registrations.length) {
-        const results = await Promise.allSettled(before.registrations.map(reg => reg.unregister()));
-        removedWorkers = results.filter(r => r.status === 'fulfilled' && r.value).length;
+      const before = await inspectRuntime();
+      if (Array.isArray(before.registrations) && before.registrations.length) {
+        const jobs = before.registrations.map(reg => withTimeout(reg.unregister(), 700, 'Desregistro de Service Worker').catch(() => false));
+        const results = await Promise.all(jobs);
+        removedWorkers = results.filter(Boolean).length;
       }
-      if (before.cacheKeys.length) {
-        const results = await Promise.allSettled(before.cacheKeys.map(key => caches.delete(key)));
-        removedCaches = results.filter(r => r.status === 'fulfilled' && r.value).length;
+      if (Array.isArray(before.cacheKeys) && before.cacheKeys.length) {
+        const jobs = before.cacheKeys.map(key => withTimeout(caches.delete(key), 700, 'Remoção de cache').catch(() => false));
+        const results = await Promise.all(jobs);
+        removedCaches = results.filter(Boolean).length;
       }
-      const after = await getRuntimeState();
-      const clean = after.registrations.length === 0 && after.cacheKeys.length === 0;
-      setStep('cache', clean ? 'ok' : 'warn', clean ? 'limpo' : 'parcial');
-      log(clean ? 'ok' : 'warn', 'Runtime antigo neutralizado', `${removedWorkers} worker(s), ${removedCaches} cache(s); restantes: ${after.registrations.length} worker(s), ${after.cacheKeys.length} cache(s)`);
+      const after = await inspectRuntime();
+      const confirmed = Array.isArray(after.registrations) && Array.isArray(after.cacheKeys);
+      const clean = confirmed && after.registrations.length === 0 && after.cacheKeys.length === 0;
+      if (clean) {
+        setStep('cache', 'ok', 'limpo');
+        log('ok', 'Runtime antigo neutralizado', `${removedWorkers} worker(s), ${removedCaches} cache(s)`);
+      } else {
+        setStep('cache', 'warn', confirmed ? 'parcial' : 'não bloqueante');
+        log('warn', confirmed ? 'Runtime antigo ainda pode ter resíduos' : 'Verificação do runtime não respondeu a tempo', 'o app continuará com arquivos de URL única');
+      }
       try { localStorage.setItem(`registro-v1-runtime-clean-${RELEASE}`, clean ? '1' : '0'); } catch (_) {}
-      return { clean, ...after };
+      return { clean, confirmed };
     } catch (error) {
-      setStep('cache', 'warn', 'parcial');
-      log('warn', 'Falha parcial ao limpar runtime antigo', error?.message || error);
-      return { clean: false, registrations: [], cacheKeys: [] };
+      setStep('cache', 'warn', 'não bloqueante');
+      log('warn', 'Limpeza do runtime falhou sem bloquear o app', error?.message || error);
+      return { clean: false, confirmed: false };
     }
   }
 
@@ -80,7 +98,7 @@
     const idbOk = 'indexedDB' in window;
     if (localOk && idbOk) { setStep('storage', 'ok', 'disponível'); log('ok', 'Armazenamento local disponível', 'IndexedDB + localStorage'); }
     else { setStep('storage', 'warn', idbOk ? 'limitado' : 'indisponível'); log('warn', 'Armazenamento local com limitação'); }
-    try { if (navigator.storage?.estimate) { const estimate = await navigator.storage.estimate(); const used = Number(estimate.usage || 0), quota = Number(estimate.quota || 0); if (quota > 0) log('info', 'Uso de armazenamento', `${Math.round(used / 1024 / 1024)} MB de ${Math.round(quota / 1024 / 1024)} MB`); } } catch (_) {}
+    try { if (navigator.storage?.estimate) { const estimate = await withTimeout(navigator.storage.estimate(), 700, 'Estimativa de armazenamento'); const used = Number(estimate.usage || 0), quota = Number(estimate.quota || 0); if (quota > 0) log('info', 'Uso de armazenamento', `${Math.round(used / 1024 / 1024)} MB de ${Math.round(quota / 1024 / 1024)} MB`); } } catch (_) {}
   }
 
   function loadScript(path, timeoutMs) {
@@ -130,15 +148,21 @@
     setStep('shell', 'ok', 'visível'); setProgress(10); log('ok', 'Tela de inicialização exibida');
     if (hadControllerAtStart) log('warn', 'Aba nasceu controlada por Service Worker antigo');
     await twoPaints(); setProgress(18);
-    const storagePromise = checkStorage();
-    const runtime = await clearObsoleteRuntime();
-    await Promise.allSettled([storagePromise]);
 
-    if (hadControllerAtStart && runtime.clean && navigator.serviceWorker?.controller) {
-      log('warn', 'Controlador residual do Safari ignorado', 'nenhuma inscrição ou cache antigo permanece ativo');
-      setMessage('Abrindo com segurança', 'A versão antiga já foi removida; continuando nesta aba…');
-    } else if (!runtime.clean) {
-      showFailure('Ainda existe runtime antigo ativo', 'Use Recuperar interface. Seus dados locais permanecem preservados.', null); return;
+    const storagePromise = checkStorage();
+    const cleanupPromise = clearObsoleteRuntime();
+    let runtime;
+    try {
+      runtime = await withTimeout(cleanupPromise, 1800, 'Limpeza do ambiente web');
+    } catch (error) {
+      runtime = { clean: false, confirmed: false };
+      setStep('cache', 'warn', 'em segundo plano');
+      log('warn', 'Limpeza excedeu o limite e deixou de bloquear a abertura', error.message);
+    }
+    Promise.allSettled([storagePromise, cleanupPromise]).catch(() => {});
+
+    if (hadControllerAtStart) {
+      log(runtime.clean ? 'ok' : 'warn', runtime.clean ? 'Controlador antigo removido' : 'Controlador residual tratado como não bloqueante', 'carregando arquivos com URL única');
     }
 
     try {
