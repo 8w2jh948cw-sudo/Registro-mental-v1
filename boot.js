@@ -3,9 +3,11 @@
   'use strict';
 
   const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '__RELEASE__');
-  const BOOT_STARTED_AT = performance.now();
+  const STARTED = performance.now();
   const scopeToken = '/Registro-mental-v1/';
   const hadControllerAtStart = Boolean(navigator.serviceWorker?.controller);
+  const bootNonce = Date.now();
+
   const boot = document.getElementById('rmBoot');
   const headline = document.getElementById('rmBootHeadline');
   const detail = document.getElementById('rmBootDetail');
@@ -30,26 +32,23 @@
   };
   window.__RM_DISABLED_SW_REGISTER = async () => fakeRegistration;
 
-  let lastFatal = null;
   let appScriptLoaded = false;
   let releaseEventSeen = false;
+  let lastFatal = null;
 
-  function nowMs() {
-    return Math.round(performance.now() - BOOT_STARTED_AT);
-  }
+  const nowMs = () => Math.round(performance.now() - STARTED);
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const twoPaints = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
   function log(kind, message, extra = '') {
     const entry = { t: nowMs(), kind, message, extra: extra ? String(extra) : '' };
     window.__RM_BOOT_DIAGNOSTICS.push(entry);
-    if (window.__RM_BOOT_DIAGNOSTICS.length > 80) window.__RM_BOOT_DIAGNOSTICS.shift();
-    renderDiagnostics();
-  }
-
-  function renderDiagnostics() {
-    if (!diagnostics) return;
-    diagnostics.textContent = window.__RM_BOOT_DIAGNOSTICS
-      .map(item => `${String(item.t).padStart(4, ' ')} ms  ${item.kind.toUpperCase().padEnd(5, ' ')}  ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)
-      .join('\n');
+    if (window.__RM_BOOT_DIAGNOSTICS.length > 100) window.__RM_BOOT_DIAGNOSTICS.shift();
+    if (diagnostics) {
+      diagnostics.textContent = window.__RM_BOOT_DIAGNOSTICS
+        .map(item => `${String(item.t).padStart(4, ' ')} ms  ${item.kind.toUpperCase().padEnd(5, ' ')}  ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)
+        .join('\n');
+    }
   }
 
   function setStep(name, state, text) {
@@ -69,49 +68,49 @@
     if (detail) detail.textContent = subtitle;
   }
 
-  function twoPaints() {
-    return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  async function getRuntimeState() {
+    let registrations = [];
+    let cacheKeys = [];
+    try {
+      if ('serviceWorker' in navigator) {
+        registrations = (await navigator.serviceWorker.getRegistrations())
+          .filter(reg => String(reg.scope || '').includes(scopeToken));
+      }
+    } catch (_) {}
+    try {
+      if ('caches' in window) {
+        cacheKeys = (await caches.keys()).filter(key => key.startsWith('registro-v1-'));
+      }
+    } catch (_) {}
+    return { registrations, cacheKeys };
   }
 
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function clearObsoleteRuntimeOnce() {
-    const cleanupKey = `registro-v1-runtime-clean-${RELEASE}`;
-    let alreadyClean = false;
-    try { alreadyClean = localStorage.getItem(cleanupKey) === '1'; } catch (_) {}
-
-    // Se esta própria página ainda está sob controle de um SW antigo, a limpeza
-    // precisa rodar novamente mesmo que a chave local diga que já foi feita.
-    if (alreadyClean && !navigator.serviceWorker?.controller) {
-      setStep('cache', 'ok', 'limpo');
-      log('ok', 'Cache de desenvolvimento já revisado');
-      return;
-    }
-
+  async function clearObsoleteRuntime() {
+    setStep('cache', 'active', 'limpando');
     let removedWorkers = 0;
     let removedCaches = 0;
+
     try {
-      setStep('cache', 'active', 'limpando');
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        const targets = registrations.filter(reg => String(reg.scope || '').includes(scopeToken));
-        const results = await Promise.allSettled(targets.map(reg => reg.unregister()));
+      const before = await getRuntimeState();
+      if (before.registrations.length) {
+        const results = await Promise.allSettled(before.registrations.map(reg => reg.unregister()));
         removedWorkers = results.filter(r => r.status === 'fulfilled' && r.value).length;
       }
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        const targets = keys.filter(key => key.startsWith('registro-v1-'));
-        const results = await Promise.allSettled(targets.map(key => caches.delete(key)));
+      if (before.cacheKeys.length) {
+        const results = await Promise.allSettled(before.cacheKeys.map(key => caches.delete(key)));
         removedCaches = results.filter(r => r.status === 'fulfilled' && r.value).length;
       }
-      try { localStorage.setItem(cleanupKey, '1'); } catch (_) {}
-      setStep('cache', 'ok', 'limpo');
-      log('ok', 'Runtime antigo neutralizado', `${removedWorkers} worker(s), ${removedCaches} cache(s)`);
+
+      const after = await getRuntimeState();
+      const clean = after.registrations.length === 0 && after.cacheKeys.length === 0;
+      setStep('cache', clean ? 'ok' : 'warn', clean ? 'limpo' : 'parcial');
+      log(clean ? 'ok' : 'warn', 'Runtime antigo neutralizado', `${removedWorkers} worker(s), ${removedCaches} cache(s); restantes: ${after.registrations.length} worker(s), ${after.cacheKeys.length} cache(s)`);
+      try { localStorage.setItem(`registro-v1-runtime-clean-${RELEASE}`, clean ? '1' : '0'); } catch (_) {}
+      return { clean, ...after };
     } catch (error) {
       setStep('cache', 'warn', 'parcial');
-      log('warn', 'Não foi possível limpar todo o runtime antigo', error?.message || error);
+      log('warn', 'Falha parcial ao limpar runtime antigo', error?.message || error);
+      return { clean: false, registrations: [], cacheKeys: [] };
     }
   }
 
@@ -145,23 +144,19 @@
     } catch (_) {}
   }
 
-  function loadScript(src, timeoutMs = 15000) {
+  function loadScript(path, timeoutMs) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
+      const sep = path.includes('?') ? '&' : '?';
+      const src = `${path}${sep}v=${encodeURIComponent(RELEASE)}&boot=${bootNonce}`;
       const timer = setTimeout(() => {
         script.remove();
-        reject(new Error(`Tempo excedido ao carregar ${src}`));
+        reject(new Error(`Tempo excedido ao carregar ${path}`));
       }, timeoutMs);
       script.src = src;
       script.async = true;
-      script.onload = () => {
-        clearTimeout(timer);
-        resolve();
-      };
-      script.onerror = () => {
-        clearTimeout(timer);
-        reject(new Error(`Falha de rede ao carregar ${src}`));
-      };
+      script.onload = () => { clearTimeout(timer); resolve(); };
+      script.onerror = () => { clearTimeout(timer); reject(new Error(`Falha ao carregar ${path}`)); };
       document.head.appendChild(script);
     });
   }
@@ -183,27 +178,6 @@
     return appLooksFunctional();
   }
 
-  function installErrorCapture() {
-    window.addEventListener('error', event => {
-      const source = String(event.filename || '');
-      const message = event.message || 'Erro JavaScript';
-      const relevant = /app\.js|patches\.js|boot\.js/i.test(source) || appScriptLoaded;
-      if (relevant) {
-        lastFatal = { message, source, line: event.lineno || 0, column: event.colno || 0 };
-        log('error', message, source ? `${source.split('/').pop()}:${event.lineno || 0}` : 'runtime');
-      }
-    });
-    window.addEventListener('unhandledrejection', event => {
-      const reason = event.reason?.message || String(event.reason || 'Promise rejeitada');
-      log('error', 'Promise rejeitada', reason);
-      lastFatal = { message: reason, source: 'promise' };
-    });
-    window.addEventListener('registro:release-ready', event => {
-      releaseEventSeen = true;
-      log('ok', 'Evento de versão recebido', event.detail?.release || RELEASE);
-    });
-  }
-
   function showFailure(title, subtitle, error) {
     document.body.classList.add('rm-boot-failed');
     setMessage(title, subtitle);
@@ -219,23 +193,41 @@
     setProgress(100);
     setMessage('Tudo pronto', `Registro ${RELEASE} iniciado em ${nowMs()} ms`);
     log('ok', 'Aplicativo pronto para uso', `${nowMs()} ms`);
-    await sleep(120);
+    await sleep(100);
     document.body.classList.remove('rm-booting', 'rm-boot-failed');
     document.body.classList.add('rm-boot-complete');
     if (boot) {
       boot.classList.add('rm-boot-hide');
-      setTimeout(() => boot.remove(), 260);
+      setTimeout(() => boot.remove(), 240);
     }
   }
 
+  window.addEventListener('error', event => {
+    const source = String(event.filename || '');
+    const message = event.message || 'Erro JavaScript';
+    if (/app\.js|patches\.js|boot\.js/i.test(source) || appScriptLoaded) {
+      lastFatal = { message, source };
+      log('error', message, source ? source.split('/').pop() : 'runtime');
+    }
+  });
+  window.addEventListener('unhandledrejection', event => {
+    const reason = event.reason?.message || String(event.reason || 'Promise rejeitada');
+    lastFatal = { message: reason, source: 'promise' };
+    log('error', 'Promise rejeitada', reason);
+  });
+  window.addEventListener('registro:release-ready', event => {
+    releaseEventSeen = true;
+    log('ok', 'Evento de versão recebido', event.detail?.release || RELEASE);
+  });
+
   retryButton?.addEventListener('click', () => {
-    location.replace(`./launch.html?v=${encodeURIComponent(RELEASE)}&retry=${Date.now()}`);
+    location.replace(`./?v=${encodeURIComponent(RELEASE)}&retry=${Date.now()}`);
   });
   safeButton?.addEventListener('click', () => {
-    location.href = `./safe.html?v=${encodeURIComponent(RELEASE)}`;
+    location.href = `./safe.html?v=${encodeURIComponent(RELEASE)}&safe=${Date.now()}`;
   });
   recoverButton?.addEventListener('click', () => {
-    location.href = `./recover.html?v=${encodeURIComponent(RELEASE)}&from=boot`;
+    location.href = `./recover.html?v=${encodeURIComponent(RELEASE)}&from=boot&recover=${Date.now()}`;
   });
   copyButton?.addEventListener('click', async () => {
     const payload = [
@@ -243,6 +235,7 @@
       `URL: ${location.href}`,
       `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`,
       `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`,
+      `Controlador residual agora: ${navigator.serviceWorker?.controller ? 'sim' : 'não'}`,
       `Online: ${navigator.onLine ? 'sim' : 'não'}`,
       `User agent: ${navigator.userAgent}`,
       '',
@@ -252,96 +245,74 @@
       await navigator.clipboard.writeText(payload);
       copyButton.textContent = 'Diagnóstico copiado';
     } catch (_) {
-      diagnostics.hidden = false;
-      diagnostics.textContent = payload;
+      if (diagnostics) {
+        diagnostics.hidden = false;
+        diagnostics.textContent = payload;
+      }
     }
   });
 
   async function start() {
-    installErrorCapture();
     setStep('shell', 'ok', 'visível');
     setProgress(10);
     log('ok', 'Tela de inicialização exibida');
-    if (hadControllerAtStart) log('warn', 'Página ainda controlada por Service Worker antigo');
+    if (hadControllerAtStart) log('warn', 'Aba nasceu controlada por Service Worker antigo');
 
-    // Garante pelo menos um frame realmente pintado antes do bundle grande.
     await twoPaints();
     setProgress(18);
 
-    const cleanupPromise = clearObsoleteRuntimeOnce();
     const storagePromise = checkStorage();
+    const runtime = await clearObsoleteRuntime();
+    await Promise.allSettled([storagePromise]);
 
-    // Um SW que já controla o documento continua podendo interceptar app.js até
-    // a próxima navegação. Portanto, nessa situação NÃO carregamos o motor.
-    // Limpamos a inscrição/cache e fazemos uma passagem pelo launcher primeiro.
-    if (hadControllerAtStart) {
-      setMessage('Removendo uma versão antiga', 'Preparando uma nova abertura sem cache intermediário…');
-      setProgress(24);
-      await Promise.allSettled([cleanupPromise, storagePromise]);
-      try {
-        const handoffKey = `registro-v1-sw-handoff-${RELEASE}`;
-        const alreadyHandedOff = sessionStorage.getItem(handoffKey) === '1';
-        if (!alreadyHandedOff) {
-          sessionStorage.setItem(handoffKey, '1');
-          log('info', 'Reabrindo pelo launcher após remover o controlador antigo');
-          location.replace(`./launch.html?v=${encodeURIComponent(RELEASE)}&handoff=${Date.now()}`);
-          return;
-        }
-      } catch (_) {
-        location.replace(`./launch.html?v=${encodeURIComponent(RELEASE)}&handoff=${Date.now()}`);
-        return;
-      }
-
-      // Se, excepcionalmente, o mesmo controlador persistiu após um handoff,
-      // não arriscamos misturar arquivos. Mostramos recuperação em vez de app.
-      if (navigator.serviceWorker?.controller) {
-        showFailure(
-          'Uma versão antiga ainda está controlando esta página',
-          'Use Recuperar interface. Seus registros locais permanecem preservados.',
-          null
-        );
-        return;
-      }
-    }
-
-    try {
-      setMessage('Abrindo o Registro', 'Carregando o motor principal…');
-      setStep('engine', 'active', 'carregando');
-      setProgress(30);
-      log('info', 'Carregando app.js');
-      await loadScript(`./app.js?v=${encodeURIComponent(RELEASE)}`, 18000);
-      appScriptLoaded = true;
-      setStep('engine', 'ok', 'carregado');
-      setProgress(62);
-      log('ok', 'Motor principal carregado');
-    } catch (error) {
-      showFailure('O motor do app não abriu', 'Seus dados continuam preservados. Use Recuperar ou Modo seguro abaixo.', error);
+    if (hadControllerAtStart && runtime.clean && navigator.serviceWorker?.controller) {
+      log('warn', 'Controlador residual do Safari ignorado', 'nenhuma inscrição ou cache antigo permanece ativo');
+      setMessage('Abrindo com segurança', 'A versão antiga já foi removida; continuando nesta aba…');
+    } else if (!runtime.clean) {
+      showFailure(
+        'Ainda existe runtime antigo ativo',
+        'Use Recuperar interface. Seus dados locais permanecem preservados.',
+        null
+      );
       return;
     }
 
     try {
-      setMessage('Finalizando', 'Aplicando correções e personalizações…');
+      setStep('engine', 'active', 'carregando');
+      setMessage('Abrindo o Registro', 'Carregando o motor principal…');
+      setProgress(32);
+      log('info', 'Carregando app.js com URL única');
+      await loadScript('./app.js', 18000);
+      appScriptLoaded = true;
+      setStep('engine', 'ok', 'carregado');
+      setProgress(64);
+      log('ok', 'Motor principal carregado');
+    } catch (error) {
+      showFailure('O motor do app não abriu', 'Seus dados continuam preservados. Use Recuperar ou Modo seguro.', error);
+      return;
+    }
+
+    try {
       setStep('patches', 'active', 'aplicando');
-      setProgress(72);
-      await loadScript(`./patches.js?v=${encodeURIComponent(RELEASE)}`, 8000);
+      setMessage('Finalizando', 'Aplicando correções e personalizações…');
+      setProgress(74);
+      await loadScript('./patches.js', 8000);
       setStep('patches', 'ok', 'aplicadas');
       log('ok', 'Correções finais carregadas');
     } catch (error) {
       setStep('patches', 'warn', 'parcial');
       log('warn', 'Correções finais não carregaram', error?.message || error);
-      // A interface principal pode continuar funcionando sem as correções cosméticas.
     }
 
-    await Promise.allSettled([cleanupPromise, storagePromise]);
-    setProgress(84);
     setStep('ready', 'active', 'verificando');
+    setProgress(86);
     setMessage('Quase pronto', 'Verificando se a interface respondeu…');
 
     const functional = await waitForFunctionalState();
     if (!functional) {
       showFailure(
         'A interface não respondeu',
-        'O carregamento dos arquivos terminou, mas o app não confirmou que está funcional. Seus dados não foram apagados.',
+        'Os arquivos carregaram, mas o app não confirmou funcionamento. Seus dados não foram apagados.',
         lastFatal ? new Error(lastFatal.message) : null
       );
       return;
