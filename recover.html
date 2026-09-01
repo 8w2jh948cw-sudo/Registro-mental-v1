@@ -17,6 +17,10 @@
     .actions{display:grid;gap:9px;margin-top:16px}.actions a{text-decoration:none;text-align:center;padding:12px 14px;border-radius:13px;background:#111114;color:#fff;font-size:14px;font-weight:600}.actions a.secondary{background:#ececf1;color:#111114}
     @media(prefers-color-scheme:dark){html,body{background:#111114;color:#f7f7f8}section{background:#1c1c1e;box-shadow:none}p{color:#a1a1a6}.bar{background:#2c2c2e}.actions a{background:#f2f2f4;color:#111114}.actions a.secondary{background:#2c2c2e;color:#f7f7f8}}
   </style>
+
+  <!-- rm-environment-icon -->
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
 </head>
 <body>
 <main><section>
@@ -24,8 +28,8 @@
   <p id="status">Removendo somente o cache e o Service Worker da interface. IndexedDB e localStorage não serão apagados.</p>
   <div class="bar" id="bar"><span></span></div>
   <div class="actions" id="actions" hidden>
-    <a href="./launch.html?v=__RELEASE__&recover=1">Abrir o app novamente</a>
-    <a class="secondary" href="./safe.html?v=__RELEASE__&recover=1">Abrir modo seguro</a>
+    <a href="./launch.html?v=1.1.1&recover=1">Abrir o app novamente</a>
+    <a class="secondary" href="./safe.html?v=1.1.1&recover=1">Abrir modo seguro</a>
   </div>
 </section></main>
 <script>
@@ -52,7 +56,7 @@
     bar.hidden=true;
     actions.hidden=false;
     try{localStorage.setItem('registro-v1-last-recovery',new Date().toISOString())}catch(_){}
-    setTimeout(()=>location.replace(`./launch.html?v=__RELEASE__&recover=${Date.now()}`),900);
+    setTimeout(()=>location.replace(`./launch.html?v=1.1.1&recover=${Date.now()}`),900);
   }catch(err){
     status.className='bad';
     status.textContent='A limpeza automática não terminou. Seus registros não foram apagados. Você ainda pode abrir o modo seguro.';

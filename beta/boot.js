@@ -2,9 +2,9 @@
 (() => {
   'use strict';
 
-  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.1.1');
+  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.1');
   const BOOT_STARTED_AT = performance.now();
-  const scopeToken = '/Registro-mental-v1/';
+  const scopeToken = '/Registro-mental-v1/beta/';
   const hadControllerAtStart = Boolean(navigator.serviceWorker?.controller);
   const boot = document.getElementById('rmBoot');
   const headline = document.getElementById('rmBootHeadline');
@@ -78,7 +78,7 @@
   }
 
   async function clearObsoleteRuntimeOnce() {
-    const cleanupKey = `registro-v1-runtime-clean-${RELEASE}`;
+    const cleanupKey = `registro-beta-v1-runtime-clean-${RELEASE}`;
     let alreadyClean = false;
     try { alreadyClean = localStorage.getItem(cleanupKey) === '1'; } catch (_) {}
 
@@ -102,7 +102,7 @@
       }
       if ('caches' in window) {
         const keys = await caches.keys();
-        const targets = keys.filter(key => key.startsWith('registro-v1-'));
+        const targets = keys.filter(key => key.startsWith('registro-beta-v1-'));
         const results = await Promise.allSettled(targets.map(key => caches.delete(key)));
         removedCaches = results.filter(r => r.status === 'fulfilled' && r.value).length;
       }
@@ -279,7 +279,7 @@
       setProgress(24);
       await Promise.allSettled([cleanupPromise, storagePromise]);
       try {
-        const handoffKey = `registro-v1-sw-handoff-${RELEASE}`;
+        const handoffKey = `registro-beta-v1-sw-handoff-${RELEASE}`;
         const alreadyHandedOff = sessionStorage.getItem(handoffKey) === '1';
         if (!alreadyHandedOff) {
           sessionStorage.setItem(handoffKey, '1');

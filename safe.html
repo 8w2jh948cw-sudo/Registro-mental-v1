@@ -20,6 +20,10 @@
     small{display:block;color:#8e8e93;margin-top:10px;line-height:1.45}
     @media(prefers-color-scheme:dark){:root,body{background:#111114;color:#f7f7f8}.card{background:#1c1c1e}.row{border-color:#2c2c2e}.row span,p,small{color:#a1a1a6}.secondary{background:#2c2c2e!important;color:#f7f7f8!important}pre{background:#111114;color:#e5e5e7}.danger{background:#2a1715!important;color:#ff6961!important}}
   </style>
+
+  <!-- rm-environment-icon -->
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
 </head>
 <body>
 <main>
@@ -38,15 +42,15 @@
     <div class="row"><strong>Registros</strong><span id="eventsCount">—</span></div>
     <div class="row"><strong>Medicamentos cadastrados</strong><span id="medicationsCount">—</span></div>
     <div class="row"><strong>Banco local</strong><span id="dbVersion">—</span></div>
-    <div class="row"><strong>Versão da interface</strong><span>__RELEASE__</span></div>
+    <div class="row"><strong>Versão da interface</strong><span>1.1.1</span></div>
   </section>
 
   <section class="card">
     <strong>O que fazer</strong>
     <div class="actions">
-      <a class="button" href="./launch.html?v=__RELEASE__&safe=1">Tentar abrir o app novamente</a>
+      <a class="button" href="./launch.html?v=1.1.1&safe=1">Tentar abrir o app novamente</a>
       <button class="secondary" id="backupBtn" type="button">Criar backup de emergência</button>
-      <a class="button secondary" href="./recover.html?v=__RELEASE__&from=safe">Limpar somente cache da interface</a>
+      <a class="button secondary" href="./recover.html?v=1.1.1&from=safe">Limpar somente cache da interface</a>
     </div>
     <small>O backup lê IndexedDB e as configurações locais. Ele não apaga nem altera os registros.</small>
   </section>
@@ -124,7 +128,7 @@
       const payload={
         exportedAt:new Date().toISOString(),
         source:'Registro Mental — modo seguro',
-        release:'__RELEASE__',
+        release:'1.1.1',
         database:{name:DB_NAME,version:db.version,events:await readStore('events'),medications:await readStore('medications'),audio:await readStore('audio')},
         localStorage:{}
       };

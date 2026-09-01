@@ -1,0 +1,8 @@
+{
+  "environment": "beta",
+  "release": "1.2.0-beta.1",
+  "database": "registro-mental-beta-v1",
+  "settings": "registro-beta-settings-v1",
+  "writes_to_production": false,
+  "copy_direction": "production-to-beta-only"
+}

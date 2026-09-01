@@ -18,6 +18,10 @@
     @keyframes move{to{transform:translateX(185%)}}
     @media(prefers-color-scheme:dark){html,body{background:#111114;color:#f7f7f8}.mark{background:#1c1c1e}.status{color:#a1a1a6}.bar{background:#2c2c2e}}
   </style>
+
+  <!-- rm-environment-icon -->
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
 </head>
 <body>
 <main>
@@ -28,7 +32,7 @@
 </main>
 <script>
 (() => {
-  const RELEASE='__RELEASE__';
+  const RELEASE='1.1.1';
   const status=document.getElementById('status');
   const cleanupKey=`registro-v1-launch-clean-${RELEASE}`;
   async function clean(){

@@ -1,1 +1,157 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d0d10"><title>Modo Seguro Beta</title><link rel="icon" href="./icon.svg" type="image/svg+xml"><style>body{margin:0;background:#0d0d10;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}main{width:min(100%,440px);margin:auto;padding:calc(28px + env(safe-area-inset-top)) 16px 40px}.card{background:#18181e;border:1px solid #303039;border-radius:20px;padding:16px;margin:12px 0}.muted{color:#9f9fa8;font-size:13px;line-height:1.45}.metric{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2a2a31}.metric:last-child{border:0}a,button{display:block;width:100%;margin-top:10px;padding:12px;border:0;border-radius:13px;background:#7652e9;color:#fff;text-decoration:none;text-align:center;font-weight:750}.secondary{background:#292932}</style></head><body><main><h1>Modo Seguro Beta</h1><p class="muted">Lê somente <strong>registro-mental-beta-v1</strong>. O banco Oficial não é aberto por esta página.</p><div class="card" id="stats"><div class="muted">Verificando banco Beta…</div></div><button id="backup" class="secondary">Exportar backup da Beta</button><a href="/Registro-mental-v1/beta/">Abrir Beta</a><a class="secondary" href="/Registro-mental-v1/menu.html">Voltar ao Menu</a></main><script>(()=>{const DB='registro-mental-beta-v1';let snapshot={};function open(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('events')){const s=d.createObjectStore('events',{keyPath:'id'});s.createIndex('timestamp','timestamp');s.createIndex('type','type')}if(!d.objectStoreNames.contains('audio'))d.createObjectStore('audio',{keyPath:'id'});if(!d.objectStoreNames.contains('medications'))d.createObjectStore('medications',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}function all(db,n){return new Promise((res,rej)=>{if(!db.objectStoreNames.contains(n))return res([]);const r=db.transaction(n,'readonly').objectStore(n).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}(async()=>{try{const db=await open();for(const n of ['events','medications','audio'])snapshot[n]=await all(db,n);db.close();document.getElementById('stats').innerHTML='<div class="metric"><span>Registros</span><strong>'+snapshot.events.length+'</strong></div><div class="metric"><span>Medicamentos</span><strong>'+snapshot.medications.length+'</strong></div><div class="metric"><span>Áudios legados</span><strong>'+snapshot.audio.length+'</strong></div>'}catch(e){document.getElementById('stats').innerHTML='<div class="muted">Falha ao ler a Beta: '+(e.message||e)+'</div>'}})();document.getElementById('backup').onclick=()=>{const data={environment:'beta',database:DB,exportedAt:new Date().toISOString(),...snapshot};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='registro-mental-beta-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}})();</script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Registro — Modo seguro</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;color:#111114;background:#f5f5f7}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;padding:24px 18px 40px;background:#f5f5f7;color:#111114}
+    main{width:min(100%,520px);margin:0 auto}header{margin:10px 2px 22px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:#7d5cff;text-transform:uppercase;margin:0 0 6px}h1{font-size:28px;margin:0 0 8px}p{font-size:14px;line-height:1.48;color:#6e6e73;margin:0}
+    .card{background:#fff;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 6px 24px rgba(0,0,0,.05)}
+    .row{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #ececf0}.row:last-child{border-bottom:0}.row strong{font-size:14px}.row span{font-size:13px;color:#6e6e73;text-align:right;word-break:break-word}
+    .status{display:flex;align-items:center;gap:9px}.dot{width:9px;height:9px;border-radius:50%;background:#f0b429;flex:none}.dot.ok{background:#34c759}.dot.bad{background:#ff3b30}
+    .actions{display:grid;gap:10px;margin-top:16px}button,a.button{appearance:none;border:0;text-decoration:none;text-align:center;border-radius:14px;padding:14px 16px;font:600 15px/1.2 inherit;background:#111114;color:#fff;display:block}.secondary{background:#e9e9ee!important;color:#111114!important}.danger{background:#fff0ee!important;color:#d92d20!important}
+    pre{white-space:pre-wrap;word-break:break-word;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f5f5f7;padding:12px;border-radius:12px;max-height:220px;overflow:auto}
+    small{display:block;color:#8e8e93;margin-top:10px;line-height:1.45}
+    @media(prefers-color-scheme:dark){:root,body{background:#111114;color:#f7f7f8}.card{background:#1c1c1e}.row{border-color:#2c2c2e}.row span,p,small{color:#a1a1a6}.secondary{background:#2c2c2e!important;color:#f7f7f8!important}pre{background:#111114;color:#e5e5e7}.danger{background:#2a1715!important;color:#ff6961!important}}
+  </style>
+
+  <!-- rm-environment-icon -->
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Recuperação</p>
+    <h1>Modo seguro</h1>
+    <p>Esta tela não carrega o aplicativo principal. Ela serve para confirmar que seus dados locais continuam acessíveis e permitir um backup de emergência.</p>
+  </header>
+
+  <section class="card">
+    <div class="status"><span class="dot" id="healthDot"></span><strong id="healthTitle">Verificando armazenamento…</strong></div>
+    <small id="healthDetail">Nenhum dado será alterado durante esta verificação.</small>
+  </section>
+
+  <section class="card" id="countsCard" hidden>
+    <div class="row"><strong>Registros</strong><span id="eventsCount">—</span></div>
+    <div class="row"><strong>Medicamentos cadastrados</strong><span id="medicationsCount">—</span></div>
+    <div class="row"><strong>Banco local</strong><span id="dbVersion">—</span></div>
+    <div class="row"><strong>Versão da interface</strong><span>1.2.0-beta.1</span></div>
+  </section>
+
+  <section class="card">
+    <strong>O que fazer</strong>
+    <div class="actions">
+      <a class="button" href="./launch.html?v=1.2.0-beta.1&safe=1">Tentar abrir o app novamente</a>
+      <button class="secondary" id="backupBtn" type="button">Criar backup de emergência</button>
+      <a class="button secondary" href="./recover.html?v=1.2.0-beta.1&from=safe">Limpar somente cache da interface</a>
+    </div>
+    <small>O backup lê IndexedDB e as configurações locais. Ele não apaga nem altera os registros.</small>
+  </section>
+
+  <section class="card" id="logCard">
+    <strong>Diagnóstico</strong>
+    <pre id="log">Iniciando…</pre>
+  </section>
+</main>
+<script>
+(() => {
+  const DB_NAME='registro-mental-beta-v1';
+  const DB_VERSION=2;
+  const logEl=document.getElementById('log');
+  const dot=document.getElementById('healthDot');
+  const title=document.getElementById('healthTitle');
+  const detail=document.getElementById('healthDetail');
+  const countsCard=document.getElementById('countsCard');
+  const backupBtn=document.getElementById('backupBtn');
+  let db=null;
+  const logs=[];
+  function log(msg){logs.push(`${new Date().toLocaleTimeString('pt-BR')}  ${msg}`);logEl.textContent=logs.join('\n')}
+  function req(r){return new Promise((resolve,reject)=>{r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+  async function openExistingDB(){
+    return new Promise((resolve,reject)=>{
+      const r=indexedDB.open(DB_NAME,DB_VERSION);
+      r.onupgradeneeded=()=>{
+        // Replica somente o esquema oficial caso seja um aparelho sem banco ainda.
+        const d=r.result;
+        if(!d.objectStoreNames.contains('events')){const s=d.createObjectStore('events',{keyPath:'id'});s.createIndex('timestamp','timestamp');s.createIndex('type','type')}
+        if(!d.objectStoreNames.contains('audio'))d.createObjectStore('audio',{keyPath:'id'});
+        if(!d.objectStoreNames.contains('medications'))d.createObjectStore('medications',{keyPath:'id'});
+      };
+      r.onsuccess=()=>resolve(r.result);
+      r.onerror=()=>reject(r.error);
+      r.onblocked=()=>reject(new Error('Banco local bloqueado por outra aba'));
+    });
+  }
+  async function countStore(name){
+    if(!db.objectStoreNames.contains(name))return 0;
+    return req(db.transaction(name,'readonly').objectStore(name).count());
+  }
+  async function readStore(name){
+    if(!db.objectStoreNames.contains(name))return [];
+    return req(db.transaction(name,'readonly').objectStore(name).getAll());
+  }
+  async function initialize(){
+    try{
+      if(!('indexedDB' in window))throw new Error('IndexedDB não está disponível');
+      db=await openExistingDB();
+      const events=await countStore('events');
+      const medications=await countStore('medications');
+      document.getElementById('eventsCount').textContent=String(events);
+      document.getElementById('medicationsCount').textContent=String(medications);
+      document.getElementById('dbVersion').textContent=`${DB_NAME} · v${db.version}`;
+      countsCard.hidden=false;
+      dot.classList.add('ok');
+      title.textContent='Seus dados locais estão acessíveis';
+      detail.textContent=`Foram encontrados ${events} registro(s) e ${medications} medicamento(s) cadastrado(s).`;
+      log(`Banco aberto com sucesso: versão ${db.version}`);
+      log(`events=${events}; medications=${medications}`);
+    }catch(error){
+      dot.classList.add('bad');
+      title.textContent='Não foi possível abrir o banco local';
+      detail.textContent=error?.message||String(error);
+      log(`ERRO: ${error?.stack||error}`);
+      backupBtn.disabled=true;
+    }
+  }
+  backupBtn.addEventListener('click',async()=>{
+    if(!db)return;
+    backupBtn.disabled=true;
+    backupBtn.textContent='Preparando backup…';
+    try{
+      const payload={
+        exportedAt:new Date().toISOString(),
+        source:'Registro Mental — modo seguro',
+        release:'1.2.0-beta.1',
+        database:{name:DB_NAME,version:db.version,events:await readStore('events'),medications:await readStore('medications'),audio:await readStore('audio')},
+        localStorage:{}
+      };
+      for(let i=0;i<localStorage.length;i++){
+        const key=localStorage.key(i);
+        if(key&&key.startsWith('registro-'))payload.localStorage[key]=localStorage.getItem(key);
+      }
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`registro-backup-emergencia-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+      backupBtn.textContent='Backup criado';
+      log('Backup de emergência criado com sucesso');
+    }catch(error){
+      backupBtn.disabled=false;
+      backupBtn.textContent='Tentar backup novamente';
+      log(`ERRO no backup: ${error?.message||error}`);
+    }
+  });
+  initialize();
+})();
+</script>
+</body>
+</html>

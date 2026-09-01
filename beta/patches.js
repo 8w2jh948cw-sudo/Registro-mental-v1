@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.1.1');
+  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.1');
   const SPARK_ICON = `<svg class="svg-icon rm-spark-custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21.7734 24.9609" width="24" height="24" aria-hidden="true" focusable="false" stroke="none">
     <g stroke="none">
       <rect height="24.9609" opacity="0" width="21.7734" x="0" y="0"/>
@@ -40,7 +40,7 @@
     }
 
     try {
-      const key = 'registro-settings-v2';
+      const key = 'registro-beta-settings-v1';
       const raw = localStorage.getItem(key);
       if (raw) {
         const settings = JSON.parse(raw);
@@ -93,13 +93,13 @@
         if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
           await Promise.allSettled(regs
-            .filter(reg => String(reg.scope || '').includes('/Registro-mental-v1/'))
+            .filter(reg => String(reg.scope || '').includes('/Registro-mental-v1/beta/'))
             .map(reg => reg.unregister()));
         }
         if ('caches' in window) {
           const keys = await caches.keys();
           await Promise.allSettled(keys
-            .filter(key => key.startsWith('registro-v1-'))
+            .filter(key => key.startsWith('registro-beta-v1-'))
             .map(key => caches.delete(key)));
         }
         button.textContent = 'Atualizando…';
