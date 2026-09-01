@@ -53,8 +53,8 @@
         margin: 0 !important;
       }
 
-      /* Histórico: conteúdo textual começa no mesmo eixo esquerdo do ícone. */
-      [data-view="history"] .rm-v28-timeline .timeline-main {
+      /* Um único design para cartões de registros: Histórico e Mais recentes. */
+      .rm-v28-timeline .timeline-main {
         padding-left: 0 !important;
       }
     `;
@@ -138,7 +138,6 @@
     wrapped.__rmBetaOriginal = original;
     window.openMedicationRegistry = wrapped;
 
-    /* O app base atribui uma referência direta ao onclick; reorienta para o wrapper. */
     const registryButton = document.getElementById('medicationRegistryBtn');
     if (registryButton) registryButton.onclick = () => window.openMedicationRegistry();
 
