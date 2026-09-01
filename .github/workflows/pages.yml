@@ -6,16 +6,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
   group: "pages-v1"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
-  RELEASE: "1.0.6"
+  RELEASE: "1.1.0"
 
 jobs:
   build-and-deploy:
@@ -27,50 +27,29 @@ jobs:
       - name: Checkout da V1
         uses: actions/checkout@v4
 
-      - name: Buscar somente a fonte congelada da migração inicial
-        uses: actions/checkout@v4
-        with:
-          repository: 8w2jh948cw-sudo/Registro-mental-pwa
-          ref: 0b6094c7b78debd00f2a8ca327087f73966a17c0
-          path: _legacy
-          persist-credentials: false
+      - name: Preparar release autossuficiente
+        run: python3 prepare_release.py
 
-      - name: Montar base limpa
-        run: python3 build_v1.py
-
-      - name: Aplicar atualização 1.0.6
+      - name: Conferir arquivos críticos
         run: |
-          sed -i "s/1\.0\.0/${RELEASE}/g" site/index.html site/app.js site/sw.js site/release-guard.js
-          printf '\n' >> site/app.js
-          cat v1-learning-icon.js >> site/app.js
-          cp -f recover.html site/recover.html
-
-      - name: Sincronizar site na raiz do repositório
-        run: |
-          cp -f site/index.html ./index.html
-          cp -f site/styles.css ./styles.css
-          cp -f site/app.js ./app.js
-          cp -f site/manifest.webmanifest ./manifest.webmanifest
-          cp -f site/sw.js ./sw.js
-          cp -f site/release-guard.js ./release-guard.js
-          cp -f site/.nojekyll ./.nojekyll
-          for file in SHORTCUT-SLEEP.txt v04demo.js v04tabbar.js v04navicons.js tabbar-lab.html tabbar-editor.html dev-editor.html preview-escala-humor.html; do
-            [ -f "site/$file" ] && cp -f "site/$file" "./$file"
-          done
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html styles.css app.js manifest.webmanifest sw.js release-guard.js .nojekyll SHORTCUT-SLEEP.txt v04demo.js v04tabbar.js v04navicons.js tabbar-lab.html tabbar-editor.html dev-editor.html preview-escala-humor.html recover.html
-          if ! git diff --cached --quiet; then
-            git commit -m "Sincroniza site publicado ${RELEASE} na raiz [skip ci]"
-            git push
-          fi
+          test -s site/index.html
+          test -s site/boot.js
+          test -s site/app.js
+          test -s site/patches.js
+          test -s site/launch.html
+          test -s site/safe.html
+          test -s site/recover.html
+          grep -q 'rmBoot' site/index.html
+          grep -q 'boot.js?v=1.1.0' site/index.html
+          ! grep -q 'navigator.serviceWorker.register' site/app.js
+          echo "Release ${RELEASE} validada antes da publicação."
 
       - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - name: Enviar site consolidado
+      - name: Enviar site
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
