@@ -4,7 +4,7 @@
 
   const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.1');
   const STARTED = performance.now();
-  const scopeToken = '/Registro-mental-v1/';
+  const scopeToken = '/Registro-mental-v1/beta/';
   const hadControllerAtStart = Boolean(navigator.serviceWorker?.controller);
   const bootNonce = Date.now();
 
@@ -52,7 +52,7 @@
       else registrations = [];
     } catch (error) { log('warn', 'Consulta de Service Worker demorou demais', error.message); }
     try {
-      if ('caches' in window) cacheKeys = (await withTimeout(caches.keys(), 700, 'Consulta de cache')).filter(key => key.startsWith('registro-v1-'));
+      if ('caches' in window) cacheKeys = (await withTimeout(caches.keys(), 700, 'Consulta de cache')).filter(key => key.startsWith('registro-beta-v1-'));
       else cacheKeys = [];
     } catch (error) { log('warn', 'Consulta de cache demorou demais', error.message); }
     return { registrations, cacheKeys };
@@ -83,7 +83,7 @@
         setStep('cache', 'warn', confirmed ? 'parcial' : 'não bloqueante');
         log('warn', confirmed ? 'Runtime antigo ainda pode ter resíduos' : 'Verificação do runtime não respondeu a tempo', 'o app continuará com arquivos de URL única');
       }
-      try { localStorage.setItem(`registro-v1-runtime-clean-${RELEASE}`, clean ? '1' : '0'); } catch (_) {}
+      try { localStorage.setItem(`registro-beta-v1-runtime-clean-${RELEASE}`, clean ? '1' : '0'); } catch (_) {}
       return { clean, confirmed };
     } catch (error) {
       setStep('cache', 'warn', 'não bloqueante');
