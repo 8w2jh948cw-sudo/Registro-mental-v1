@@ -62,6 +62,9 @@ jobs:
           p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           PY
 
+      - name: Aplicar ícones dos ambientes
+        run: python3 prepare_icons.py
+
       - name: Conferir Oficial Beta e Diagnóstico
         run: |
           test -s site/index.html
@@ -70,16 +73,22 @@ jobs:
           test -s site/launch.html
           test -s site/safe.html
           test -s site/recover.html
+          test -s site/icon.svg
           test -s site/beta/index.html
           test -s site/beta/app.js
           test -s site/beta/beta-tools.js
           test -s site/beta/beta-patches.js
+          test -s site/beta/icon.svg
           test -s site/diagnostico/index.html
           grep -q 'rmStableReleaseStamp' site/index.html
           grep -q 'registro-mental-beta-v1' site/beta/app.js
           ! grep -q "const DB_NAME='registro-mental-v1'" site/beta/app.js
           grep -q 'DADOS ISOLADOS' site/diagnostico/index.html
-          echo "Oficial ${STABLE_RELEASE} congelado; Beta ${BETA_LABEL} isolada e pronta."
+          grep -q 'image/svg+xml' site/manifest.webmanifest
+          grep -q 'image/svg+xml' site/beta/manifest.webmanifest
+          grep -q '>BETA</text>' site/beta/icon.svg
+          ! grep -q '>BETA</text>' site/icon.svg
+          echo "Oficial ${STABLE_RELEASE} congelado; Beta ${BETA_LABEL} isolada e ícones separados."
 
       - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
