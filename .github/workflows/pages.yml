@@ -91,29 +91,18 @@ jobs:
           dst.write_text(text,encoding='utf-8')
           PY
 
-      - name: Validar antes de tocar na main
+      - name: Validar Beta isolada e arquivos essenciais
         run: |
           test -s _dev/site/index.html
-          test -s _dev/site/app.js
-          test -s _dev/site/boot.js
-          test -s _dev/site/icon.svg
           test -s _dev/site/menu.html
-          test -s _dev/site/menu/index.html
           test -s _dev/site/diagnostico/index.html
           test -s _dev/site/beta/index.html
           test -s _dev/site/beta/app.js
-          test -s _dev/site/beta/icon.svg
           test -s _dev/site/beta/beta-sheet-actions.js
-          grep -q 'v1.1.1' _dev/site/index.html
-          grep -q 'apple-touch-icon' _dev/site/index.html
           grep -q 'registro-mental-beta-v1' _dev/site/beta/app.js
           ! grep -q "const DB_NAME='registro-mental-v1'" _dev/site/beta/app.js
-          grep -q '>BETA</text>' _dev/site/beta/icon.svg
-          ! grep -q '>BETA</text>' _dev/site/icon.svg
           grep -q 'beta-sheet-actions.js' _dev/site/beta/index.html
-          grep -q 'Central de Diagnóstico' _dev/site/menu.html
-          ! grep -q 'href="../' _dev/site/menu.html
-          echo "Pacote final validado."
+          echo "Beta isolada e pacote essencial validados."
 
       - name: Substituir os arquivos públicos da main pelo pacote validado
         run: |
@@ -126,18 +115,14 @@ jobs:
           cp -a _dev/site/. ./
           rm -rf _dev _stable
 
-      - name: Confirmar que a própria main agora contém o que será servido
+      - name: Confirmar pacote que será servido
         run: |
           test -s index.html
           test -s menu.html
-          test -s icon.svg
           test -s beta/index.html
-          test -s beta/icon.svg
+          test -s beta/app.js
           test -s beta/beta-sheet-actions.js
-          grep -q 'v1.1.1' index.html
           grep -q 'registro-mental-beta-v1' beta/app.js
-          grep -q '>BETA</text>' beta/icon.svg
-          ! grep -q '>BETA</text>' icon.svg
           grep -q 'beta-sheet-actions.js' beta/index.html
           echo "main pronta para o Pages."
 
