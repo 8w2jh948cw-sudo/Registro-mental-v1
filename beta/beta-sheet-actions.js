@@ -73,10 +73,17 @@
     });
   }
 
+  function removeIconSizeDescription() {
+    const control = document.getElementById('iconSizeControl');
+    const description = control?.closest('.setting-block')?.querySelector('.setting-label small');
+    description?.remove();
+  }
+
   function apply() {
     installStyles();
     enlargeCloseIcon();
     removeRedundantSheetCancels();
+    removeIconSizeDescription();
   }
 
   function observeSheetForm() {
