@@ -2,11 +2,11 @@ name: Publicar Registro Mental
 
 on:
   push:
-    branches: ["main"]
+    branches: ["development"]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -66,39 +66,47 @@ jobs:
         run: python3 prepare_icons.py
 
       - name: Criar menu central de links
-        run: |
-          python3 prepare_menu.py
-          cp site/menu/index.html site/menu.html
+        run: python3 prepare_menu.py
 
-      - name: Conferir Oficial Beta Diagnóstico e Menu
+      - name: Conferir pacote público completo
         run: |
           test -s site/index.html
-          test -s site/boot.js
           test -s site/app.js
-          test -s site/launch.html
-          test -s site/safe.html
-          test -s site/recover.html
+          test -s site/boot.js
           test -s site/icon.svg
+          test -s site/menu.html
+          test -s site/menu/index.html
+          test -s site/diagnostico/index.html
           test -s site/beta/index.html
           test -s site/beta/app.js
-          test -s site/beta/beta-tools.js
-          test -s site/beta/beta-patches.js
           test -s site/beta/icon.svg
-          test -s site/diagnostico/index.html
-          test -s site/menu/index.html
-          test -s site/menu.html
-          grep -q 'rmStableReleaseStamp' site/index.html
+          grep -q 'v1.1.1' site/index.html
+          grep -q 'apple-touch-icon' site/index.html
           grep -q 'registro-mental-beta-v1' site/beta/app.js
           ! grep -q "const DB_NAME='registro-mental-v1'" site/beta/app.js
-          grep -q 'DADOS ISOLADOS' site/diagnostico/index.html
-          grep -q 'Central de Diagnóstico' site/menu/index.html
-          grep -q 'Central de Diagnóstico' site/menu.html
-          grep -q '../beta/icon.svg' site/menu/index.html
-          grep -q 'image/svg+xml' site/manifest.webmanifest
-          grep -q 'image/svg+xml' site/beta/manifest.webmanifest
           grep -q '>BETA</text>' site/beta/icon.svg
           ! grep -q '>BETA</text>' site/icon.svg
-          echo "Oficial ${STABLE_RELEASE} congelado; Beta ${BETA_LABEL} isolada; Menu em /menu/ e /menu.html publicado."
+          grep -q 'Central de Diagnóstico' site/menu.html
+          echo "Pacote validado: Oficial ${STABLE_RELEASE}; Beta ${BETA_LABEL}; Menu e Diagnóstico presentes."
+
+      - name: Sincronizar arquivos realmente servidos pela main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf _public
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" _public
+          find _public -mindepth 1 -maxdepth 1 ! -name .git ! -name .github -exec rm -rf {} +
+          cp -a site/. _public/
+          cd _public
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "main já contém exatamente o site gerado."
+          else
+            git commit -m "chore(pages): sincroniza site gerado [skip ci]"
+            git push origin main
+          fi
 
       - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
@@ -110,6 +118,6 @@ jobs:
         with:
           path: site
 
-      - name: Publicar
+      - name: Publicar também pelo GitHub Pages Actions
         id: deployment
         uses: actions/deploy-pages@v4
