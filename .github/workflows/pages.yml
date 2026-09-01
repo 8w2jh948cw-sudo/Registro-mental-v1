@@ -66,7 +66,9 @@ jobs:
         run: python3 prepare_icons.py
 
       - name: Criar menu central de links
-        run: python3 prepare_menu.py
+        run: |
+          python3 prepare_menu.py
+          cp site/menu/index.html site/menu.html
 
       - name: Conferir Oficial Beta Diagnóstico e Menu
         run: |
@@ -84,17 +86,19 @@ jobs:
           test -s site/beta/icon.svg
           test -s site/diagnostico/index.html
           test -s site/menu/index.html
+          test -s site/menu.html
           grep -q 'rmStableReleaseStamp' site/index.html
           grep -q 'registro-mental-beta-v1' site/beta/app.js
           ! grep -q "const DB_NAME='registro-mental-v1'" site/beta/app.js
           grep -q 'DADOS ISOLADOS' site/diagnostico/index.html
           grep -q 'Central de Diagnóstico' site/menu/index.html
+          grep -q 'Central de Diagnóstico' site/menu.html
           grep -q '../beta/icon.svg' site/menu/index.html
           grep -q 'image/svg+xml' site/manifest.webmanifest
           grep -q 'image/svg+xml' site/beta/manifest.webmanifest
           grep -q '>BETA</text>' site/beta/icon.svg
           ! grep -q '>BETA</text>' site/icon.svg
-          echo "Oficial ${STABLE_RELEASE} congelado; Beta ${BETA_LABEL} isolada; Menu e ícones publicados."
+          echo "Oficial ${STABLE_RELEASE} congelado; Beta ${BETA_LABEL} isolada; Menu em /menu/ e /menu.html publicado."
 
       - name: Habilitar e configurar Pages
         uses: actions/configure-pages@v5
