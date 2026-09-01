@@ -1,0 +1,13 @@
+{
+  "id": "/Registro-mental-v1/beta/",
+  "name": "Registro Mental Beta",
+  "short_name": "Registro Beta",
+  "start_url": "/Registro-mental-v1/beta/",
+  "scope": "/Registro-mental-v1/beta/",
+  "display": "standalone",
+  "background_color": "#0d0d10",
+  "theme_color": "#f5f5f7",
+  "icons": [
+    {"src":"/Registro-mental-v1/beta/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
