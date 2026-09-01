@@ -52,6 +52,11 @@
         min-width: 0 !important;
         margin: 0 !important;
       }
+
+      /* Histórico: conteúdo textual começa no mesmo eixo esquerdo do ícone. */
+      [data-view="history"] .rm-v28-timeline .timeline-main {
+        padding-left: 0 !important;
+      }
     `;
     document.head.appendChild(style);
   }
