@@ -83,18 +83,12 @@ jobs:
           PY
           python3 prepare_icons.py
           python3 prepare_menu.py
-          python3 - <<'PY'
-          from pathlib import Path
-          src=Path('site/menu/index.html')
-          dst=Path('site/menu.html')
-          text=src.read_text(encoding='utf-8').replace('../','./')
-          dst.write_text(text,encoding='utf-8')
-          PY
 
       - name: Validar Beta isolada e arquivos essenciais
         run: |
           test -s _dev/site/index.html
           test -s _dev/site/menu.html
+          test -s _dev/site/menu/index.html
           test -s _dev/site/diagnostico/index.html
           test -s _dev/site/beta/index.html
           test -s _dev/site/beta/app.js
@@ -102,7 +96,9 @@ jobs:
           grep -q 'registro-mental-beta-v1' _dev/site/beta/app.js
           ! grep -q "const DB_NAME='registro-mental-v1'" _dev/site/beta/app.js
           grep -q 'beta-sheet-actions.js' _dev/site/beta/index.html
-          echo "Beta isolada e pacote essencial validados."
+          grep -q 'Central de Diagnóstico' _dev/site/menu.html
+          ! grep -q 'url=./menu.html' _dev/site/menu.html
+          echo "Beta isolada, Menu real e pacote essencial validados."
 
       - name: Substituir os arquivos públicos da main pelo pacote validado
         run: |
@@ -119,12 +115,15 @@ jobs:
         run: |
           test -s index.html
           test -s menu.html
+          test -s menu/index.html
           test -s beta/index.html
           test -s beta/app.js
           test -s beta/beta-sheet-actions.js
           grep -q 'registro-mental-beta-v1' beta/app.js
           grep -q 'beta-sheet-actions.js' beta/index.html
-          echo "main pronta para o Pages."
+          grep -q 'Central de Diagnóstico' menu.html
+          ! grep -q 'url=./menu.html' menu.html
+          echo "main pronta para o Pages com Menu independente validado."
 
       - name: Gravar pacote público na main
         run: |
