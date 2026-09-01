@@ -1,17 +1,18 @@
-name: Publicar Registro Mental
+name: Sincronizar site público do Registro Mental
 
 on:
   push:
-    branches: ["development"]
+    branches: ["main"]
+    paths:
+      - ".github/workflows/pages.yml"
+      - ".publish-trigger"
   workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages-registro-mental"
+  group: "registro-mental-publicacao-main"
   cancel-in-progress: true
 
 env:
@@ -20,14 +21,21 @@ env:
   BETA_LABEL: "1.2.0-beta.1"
 
 jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-and-sync-main:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do desenvolvimento
+      - name: Checkout da main que o Pages realmente publica
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Checkout do código de desenvolvimento
+        uses: actions/checkout@v4
+        with:
+          ref: development
+          path: _dev
+          persist-credentials: false
 
       - name: Checkout da versão Oficial congelada
         uses: actions/checkout@v4
@@ -36,22 +44,23 @@ jobs:
           path: _stable
           persist-credentials: false
 
-      - name: Montar Beta a partir do desenvolvimento
+      - name: Montar Beta a partir de development
         run: |
+          cd _dev
           RELEASE=${BETA_BUILD_RELEASE} python3 prepare_release.py
           rm -rf _beta_site
           mv site _beta_site
 
-      - name: Montar Oficial a partir da branch stable
+      - name: Montar Oficial a partir de stable
         run: |
           cd _stable
           RELEASE=${STABLE_RELEASE} python3 prepare_release.py
-          cd ..
-          rm -rf site
-          cp -a _stable/site site
 
-      - name: Criar ambientes isolados
+      - name: Montar pacote público completo dentro de development
         run: |
+          rm -rf _dev/site
+          cp -a _stable/site _dev/site
+          cd _dev
           python3 prepare_environments.py
           python3 - <<'PY'
           import json
@@ -61,63 +70,70 @@ jobs:
           data['id']='./'
           p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           PY
+          python3 prepare_icons.py
+          python3 prepare_menu.py
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('site/menu/index.html')
+          dst=Path('site/menu.html')
+          text=src.read_text(encoding='utf-8').replace('../','./')
+          dst.write_text(text,encoding='utf-8')
+          PY
 
-      - name: Aplicar ícones dos ambientes
-        run: python3 prepare_icons.py
-
-      - name: Criar menu central de links
-        run: python3 prepare_menu.py
-
-      - name: Conferir pacote público completo
+      - name: Validar antes de tocar na main
         run: |
-          test -s site/index.html
-          test -s site/app.js
-          test -s site/boot.js
-          test -s site/icon.svg
-          test -s site/menu.html
-          test -s site/menu/index.html
-          test -s site/diagnostico/index.html
-          test -s site/beta/index.html
-          test -s site/beta/app.js
-          test -s site/beta/icon.svg
-          grep -q 'v1.1.1' site/index.html
-          grep -q 'apple-touch-icon' site/index.html
-          grep -q 'registro-mental-beta-v1' site/beta/app.js
-          ! grep -q "const DB_NAME='registro-mental-v1'" site/beta/app.js
-          grep -q '>BETA</text>' site/beta/icon.svg
-          ! grep -q '>BETA</text>' site/icon.svg
-          grep -q 'Central de Diagnóstico' site/menu.html
-          echo "Pacote validado: Oficial ${STABLE_RELEASE}; Beta ${BETA_LABEL}; Menu e Diagnóstico presentes."
+          test -s _dev/site/index.html
+          test -s _dev/site/app.js
+          test -s _dev/site/boot.js
+          test -s _dev/site/icon.svg
+          test -s _dev/site/menu.html
+          test -s _dev/site/menu/index.html
+          test -s _dev/site/diagnostico/index.html
+          test -s _dev/site/beta/index.html
+          test -s _dev/site/beta/app.js
+          test -s _dev/site/beta/icon.svg
+          grep -q 'v1.1.1' _dev/site/index.html
+          grep -q 'apple-touch-icon' _dev/site/index.html
+          grep -q 'registro-mental-beta-v1' _dev/site/beta/app.js
+          ! grep -q "const DB_NAME='registro-mental-v1'" _dev/site/beta/app.js
+          grep -q '>BETA</text>' _dev/site/beta/icon.svg
+          ! grep -q '>BETA</text>' _dev/site/icon.svg
+          grep -q 'Central de Diagnóstico' _dev/site/menu.html
+          ! grep -q 'href="../' _dev/site/menu.html
+          echo "Pacote final validado."
 
-      - name: Sincronizar arquivos realmente servidos pela main
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Substituir os arquivos públicos da main pelo pacote validado
         run: |
-          rm -rf _public
-          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" _public
-          find _public -mindepth 1 -maxdepth 1 ! -name .git ! -name .github -exec rm -rf {} +
-          cp -a site/. _public/
-          cd _public
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name .git \
+            ! -name .github \
+            ! -name _dev \
+            ! -name _stable \
+            -exec rm -rf {} +
+          cp -a _dev/site/. ./
+          rm -rf _dev _stable
+
+      - name: Confirmar que a própria main agora contém o que será servido
+        run: |
+          test -s index.html
+          test -s menu.html
+          test -s icon.svg
+          test -s beta/index.html
+          test -s beta/icon.svg
+          grep -q 'v1.1.1' index.html
+          grep -q 'registro-mental-beta-v1' beta/app.js
+          grep -q '>BETA</text>' beta/icon.svg
+          ! grep -q '>BETA</text>' icon.svg
+          echo "main pronta para o Pages."
+
+      - name: Gravar pacote público na main
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "main já contém exatamente o site gerado."
+            echo "Nenhuma alteração pública pendente."
           else
-            git commit -m "chore(pages): sincroniza site gerado [skip ci]"
+            git commit -m "chore(pages): publica Oficial Beta Menu e Diagnóstico [skip ci]"
             git push origin main
           fi
-
-      - name: Habilitar e configurar Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: Enviar site completo
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-      - name: Publicar também pelo GitHub Pages Actions
-        id: deployment
-        uses: actions/deploy-pages@v4
