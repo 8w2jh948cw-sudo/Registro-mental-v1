@@ -62,6 +62,17 @@ jobs:
           cp -a _stable/site _dev/site
           cd _dev
           python3 prepare_environments.py
+          cp beta-sheet-actions.js site/beta/beta-sheet-actions.js
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path('site/beta/index.html')
+          text=p.read_text(encoding='utf-8')
+          tag=f'<script src="./beta-sheet-actions.js?v={os.environ["BETA_LABEL"]}" defer></script>'
+          if 'beta-sheet-actions.js' not in text:
+              text=text.replace('</body>', tag+'\n</body>', 1)
+          p.write_text(text,encoding='utf-8')
+          PY
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -92,12 +103,14 @@ jobs:
           test -s _dev/site/beta/index.html
           test -s _dev/site/beta/app.js
           test -s _dev/site/beta/icon.svg
+          test -s _dev/site/beta/beta-sheet-actions.js
           grep -q 'v1.1.1' _dev/site/index.html
           grep -q 'apple-touch-icon' _dev/site/index.html
           grep -q 'registro-mental-beta-v1' _dev/site/beta/app.js
           ! grep -q "const DB_NAME='registro-mental-v1'" _dev/site/beta/app.js
           grep -q '>BETA</text>' _dev/site/beta/icon.svg
           ! grep -q '>BETA</text>' _dev/site/icon.svg
+          grep -q 'beta-sheet-actions.js' _dev/site/beta/index.html
           grep -q 'Central de Diagnóstico' _dev/site/menu.html
           ! grep -q 'href="../' _dev/site/menu.html
           echo "Pacote final validado."
@@ -120,10 +133,12 @@ jobs:
           test -s icon.svg
           test -s beta/index.html
           test -s beta/icon.svg
+          test -s beta/beta-sheet-actions.js
           grep -q 'v1.1.1' index.html
           grep -q 'registro-mental-beta-v1' beta/app.js
           grep -q '>BETA</text>' beta/icon.svg
           ! grep -q '>BETA</text>' icon.svg
+          grep -q 'beta-sheet-actions.js' beta/index.html
           echo "main pronta para o Pages."
 
       - name: Gravar pacote público na main
