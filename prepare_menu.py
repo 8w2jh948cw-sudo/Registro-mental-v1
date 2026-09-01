@@ -98,5 +98,18 @@ html = f'''<!doctype html>
 </body>
 </html>'''
 
+# Versão em pasta: /menu/
 (menu / "index.html").write_text(html, encoding="utf-8")
-print(f"Menu publicado em /menu/ · Oficial {STABLE_RELEASE} · Beta {BETA_LABEL}")
+
+# Versão direta na raiz: /menu.html. Como está um nível acima, corrige todos
+# os caminhos relativos de ../ para ./ para que apps, ícones e ferramentas
+# continuem apontando para o mesmo projeto.
+root_html = html.replace('../', './')
+(SITE / "menu.html").write_text(root_html, encoding="utf-8")
+
+if not (SITE / "menu.html").exists() or (SITE / "menu.html").stat().st_size < 1000:
+    raise SystemExit("Falha ao gerar site/menu.html")
+if 'href="./beta/"' not in root_html or 'src="./beta/icon.svg"' not in root_html:
+    raise SystemExit("Links relativos do menu.html incorretos")
+
+print(f"Menus publicados em /menu/ e /menu.html · Oficial {STABLE_RELEASE} · Beta {BETA_LABEL}")
