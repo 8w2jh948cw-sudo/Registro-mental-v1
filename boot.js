@@ -5,6 +5,7 @@
   const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '__RELEASE__');
   const BOOT_STARTED_AT = performance.now();
   const scopeToken = '/Registro-mental-v1/';
+  const hadControllerAtStart = Boolean(navigator.serviceWorker?.controller);
   const boot = document.getElementById('rmBoot');
   const headline = document.getElementById('rmBootHeadline');
   const detail = document.getElementById('rmBootDetail');
@@ -31,7 +32,6 @@
 
   let lastFatal = null;
   let appScriptLoaded = false;
-  let patchesLoaded = false;
   let releaseEventSeen = false;
 
   function nowMs() {
@@ -81,7 +81,10 @@
     const cleanupKey = `registro-v1-runtime-clean-${RELEASE}`;
     let alreadyClean = false;
     try { alreadyClean = localStorage.getItem(cleanupKey) === '1'; } catch (_) {}
-    if (alreadyClean) {
+
+    // Se esta própria página ainda está sob controle de um SW antigo, a limpeza
+    // precisa rodar novamente mesmo que a chave local diga que já foi feita.
+    if (alreadyClean && !navigator.serviceWorker?.controller) {
       setStep('cache', 'ok', 'limpo');
       log('ok', 'Cache de desenvolvimento já revisado');
       return;
@@ -90,6 +93,7 @@
     let removedWorkers = 0;
     let removedCaches = 0;
     try {
+      setStep('cache', 'active', 'limpando');
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         const targets = registrations.filter(reg => String(reg.scope || '').includes(scopeToken));
@@ -238,6 +242,7 @@
       `Registro Mental ${RELEASE}`,
       `URL: ${location.href}`,
       `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`,
+      `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`,
       `Online: ${navigator.onLine ? 'sim' : 'não'}`,
       `User agent: ${navigator.userAgent}`,
       '',
@@ -257,6 +262,7 @@
     setStep('shell', 'ok', 'visível');
     setProgress(10);
     log('ok', 'Tela de inicialização exibida');
+    if (hadControllerAtStart) log('warn', 'Página ainda controlada por Service Worker antigo');
 
     // Garante pelo menos um frame realmente pintado antes do bundle grande.
     await twoPaints();
@@ -264,6 +270,39 @@
 
     const cleanupPromise = clearObsoleteRuntimeOnce();
     const storagePromise = checkStorage();
+
+    // Um SW que já controla o documento continua podendo interceptar app.js até
+    // a próxima navegação. Portanto, nessa situação NÃO carregamos o motor.
+    // Limpamos a inscrição/cache e fazemos uma passagem pelo launcher primeiro.
+    if (hadControllerAtStart) {
+      setMessage('Removendo uma versão antiga', 'Preparando uma nova abertura sem cache intermediário…');
+      setProgress(24);
+      await Promise.allSettled([cleanupPromise, storagePromise]);
+      try {
+        const handoffKey = `registro-v1-sw-handoff-${RELEASE}`;
+        const alreadyHandedOff = sessionStorage.getItem(handoffKey) === '1';
+        if (!alreadyHandedOff) {
+          sessionStorage.setItem(handoffKey, '1');
+          log('info', 'Reabrindo pelo launcher após remover o controlador antigo');
+          location.replace(`./launch.html?v=${encodeURIComponent(RELEASE)}&handoff=${Date.now()}`);
+          return;
+        }
+      } catch (_) {
+        location.replace(`./launch.html?v=${encodeURIComponent(RELEASE)}&handoff=${Date.now()}`);
+        return;
+      }
+
+      // Se, excepcionalmente, o mesmo controlador persistiu após um handoff,
+      // não arriscamos misturar arquivos. Mostramos recuperação em vez de app.
+      if (navigator.serviceWorker?.controller) {
+        showFailure(
+          'Uma versão antiga ainda está controlando esta página',
+          'Use Recuperar interface. Seus registros locais permanecem preservados.',
+          null
+        );
+        return;
+      }
+    }
 
     try {
       setMessage('Abrindo o Registro', 'Carregando o motor principal…');
@@ -285,7 +324,6 @@
       setStep('patches', 'active', 'aplicando');
       setProgress(72);
       await loadScript(`./patches.js?v=${encodeURIComponent(RELEASE)}`, 8000);
-      patchesLoaded = true;
       setStep('patches', 'ok', 'aplicadas');
       log('ok', 'Correções finais carregadas');
     } catch (error) {
