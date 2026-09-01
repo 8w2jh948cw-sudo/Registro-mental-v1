@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RELEASE: "1.1.0"
+  RELEASE: "1.1.1"
 
 jobs:
   build-and-deploy:
@@ -40,7 +40,7 @@ jobs:
           test -s site/safe.html
           test -s site/recover.html
           grep -q 'rmBoot' site/index.html
-          grep -q 'boot.js?v=1.1.0' site/index.html
+          grep -q "boot.js?v=${RELEASE}" site/index.html
           ! grep -q 'navigator.serviceWorker.register' site/app.js
           echo "Release ${RELEASE} validada antes da publicação."
 
