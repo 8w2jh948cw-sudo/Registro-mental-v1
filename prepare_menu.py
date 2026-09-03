@@ -4,7 +4,7 @@ import os
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
 STABLE_RELEASE = os.environ.get("STABLE_RELEASE", "1.1.1").strip()
-BETA_LABEL = os.environ.get("BETA_LABEL", "1.2.0-beta.4").strip()
+BETA_LABEL = os.environ.get("BETA_LABEL", "1.2.0-beta.7").strip()
 
 if not SITE.exists():
     raise SystemExit("site/ ausente")

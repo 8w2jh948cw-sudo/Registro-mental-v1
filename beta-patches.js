@@ -1123,3 +1123,68 @@
     installBackupImportPatch();
   }, { once: true });
 })();
+
+/* RM_BETA_SAFARI_CHROME_FIX_V1
+   Mantém o chrome do Safari coerente com o tema sem reduzir os efeitos do modo Ultra. */
+(() => {
+  'use strict';
+
+  const STYLE_ID = 'rm-beta-safari-chrome-fix-v1';
+  const mqDark = window.matchMedia?.('(prefers-color-scheme: dark)');
+
+  function ensureViewportStyle() {
+    let style = document.getElementById(STYLE_ID);
+    if (!style) {
+      style = document.createElement('style');
+      style.id = STYLE_ID;
+      document.head.appendChild(style);
+    }
+    style.textContent = `
+      html, body {
+        background-color: var(--rm-safari-viewport-bg, var(--bg, #f5f5f7)) !important;
+      }
+    `;
+  }
+
+  function currentTheme() {
+    const attr = document.documentElement.dataset.theme;
+    if (attr === 'dark' || attr === 'light' || attr === 'system') return attr;
+    try {
+      const settings = typeof getSettings === 'function' ? getSettings() : null;
+      if (settings?.theme === 'dark' || settings?.theme === 'light' || settings?.theme === 'system') return settings.theme;
+    } catch (_) {}
+    return 'system';
+  }
+
+  function syncSafariChrome() {
+    ensureViewportStyle();
+    const theme = currentTheme();
+    const dark = theme === 'dark' || (theme === 'system' && Boolean(mqDark?.matches));
+    const color = dark ? '#000000' : '#f5f5f7';
+    const root = document.documentElement;
+
+    root.style.setProperty('--rm-safari-viewport-bg', color);
+    root.style.setProperty('background-color', color, 'important');
+    if (document.body) document.body.style.setProperty('background-color', color, 'important');
+
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', color);
+  }
+
+  const observer = new MutationObserver(syncSafariChrome);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme', 'data-visual-mode']
+  });
+
+  try { mqDark?.addEventListener?.('change', syncSafariChrome); } catch (_) {}
+  document.addEventListener('registro:release-ready', syncSafariChrome);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncSafariChrome, { once: true });
+  else syncSafariChrome();
+  requestAnimationFrame(syncSafariChrome);
+})();
