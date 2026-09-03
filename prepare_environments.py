@@ -9,7 +9,7 @@ SITE = ROOT / "site"
 BETA_SOURCE = ROOT / "_beta_site"
 STABLE_RELEASE = os.environ.get("STABLE_RELEASE", "1.1.1").strip()
 BETA_BUILD_RELEASE = os.environ.get("BETA_BUILD_RELEASE", "1.2.0").strip()
-BETA_LABEL = os.environ.get("BETA_LABEL", f"{BETA_BUILD_RELEASE}-beta.1").strip()
+BETA_LABEL = os.environ.get("BETA_LABEL", f"{BETA_BUILD_RELEASE}-beta.2").strip()
 
 if not SITE.exists() or not (SITE / "index.html").exists():
     raise SystemExit("Site Oficial ainda não foi preparado")
