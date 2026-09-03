@@ -1,0 +1,84 @@
+name: Release Beta 1.2.0-beta.6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-beta-1.2.0-beta.6.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release-beta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar JavaScript antes da publicação
+        run: |
+          node --check beta/patches.js
+          node --check patches.js
+          grep -q 'RM_BETA_SAFETY_AND_APPEARANCE_V1' beta/patches.js
+          grep -q 'RM_OFFICIAL_BACKUP_COMPAT_V1' patches.js
+
+      - name: Atualizar carimbo da Beta
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          files = [
+              'beta/beta-tools.js',
+              'beta/boot.js',
+              'beta/environment.json',
+              'beta/index.html',
+              'beta/launch.html',
+              'beta/manifest.webmanifest',
+              'beta/patches.js',
+              'beta/recover.html',
+              'beta/safe.html',
+              'beta/sw.js',
+          ]
+          old = '1.2.0-beta.5'
+          new = '1.2.0-beta.6'
+          for name in files:
+              path = Path(name)
+              text = path.read_text()
+              if old not in text:
+                  raise SystemExit(f'{name}: versão antiga não encontrada')
+              path.write_text(text.replace(old, new))
+          PY
+
+      - name: Conferir escopo e sintaxe final
+        run: |
+          node --check beta/patches.js
+          node --check patches.js
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          expected = {
+              'beta/beta-tools.js',
+              'beta/boot.js',
+              'beta/environment.json',
+              'beta/index.html',
+              'beta/launch.html',
+              'beta/manifest.webmanifest',
+              'beta/patches.js',
+              'beta/recover.html',
+              'beta/safe.html',
+              'beta/sw.js',
+          }
+          changed = set(subprocess.check_output(['git','diff','--name-only'], text=True).splitlines())
+          if changed != expected:
+              raise SystemExit(f'Arquivos inesperados no bump: {sorted(changed ^ expected)}')
+          PY
+
+      - name: Publicar Beta 1.2.0-beta.6
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add beta/beta-tools.js beta/boot.js beta/environment.json beta/index.html beta/launch.html beta/manifest.webmanifest beta/patches.js beta/recover.html beta/safe.html beta/sw.js
+          git commit -m 'Publica Beta 1.2.0-beta.6 com backups e Aparência reorganizada'
+          git push
