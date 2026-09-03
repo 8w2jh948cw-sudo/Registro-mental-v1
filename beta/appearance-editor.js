@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.9';
+  const RELEASE = '1.2.0-beta.10';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const DEFAULT_ICON = {
     home: 'home',
@@ -243,24 +243,11 @@
     const groups = [...document.querySelectorAll('.view[data-view="settings"] > .settings-group')];
     const group = groups.find(item => /personaliza[cç][aã]o avan[cç]ada|personalizar apar[eê]ncia/i.test(item.querySelector(':scope > h2')?.textContent || ''));
     const primaryButton = document.getElementById('rmAppearanceSettingsBtn');
-    if (primaryButton) {
-      const description = primaryButton.querySelector('small');
-      if (description) description.textContent = 'Prévia ao vivo, ícones, textos, tamanho e posição';
-      primaryButton.onclick = openEditor;
-      if (group && !group.contains(primaryButton)) group.remove();
-      return true;
-    }
-    const card = group?.querySelector('.settings-card');
-    const heading = group?.querySelector(':scope > h2');
-    if (!group || !card || !heading) return false;
-    heading.textContent = 'Personalizar aparência';
-    const appearance = groups.find(item => /^apar[eê]ncia$/i.test(item.querySelector(':scope > h2')?.textContent?.trim() || ''));
-    if (appearance && appearance.nextElementSibling !== group) appearance.insertAdjacentElement('afterend', group);
-    if (!document.getElementById('rmAppearanceEditorBtn')) {
-      card.innerHTML = `<button class="settings-row" id="rmAppearanceEditorBtn" type="button"><span class="settings-row-icon" data-icon="settings"></span><span><strong>Abrir editor de aparência</strong><small>Prévia ao vivo, ícones, textos, tamanho e posição</small></span><span class="chevron">›</span></button>`;
-    }
-    try { if (typeof hydrateIcons === 'function') hydrateIcons(card); } catch (_) {}
-    document.getElementById('rmAppearanceEditorBtn').onclick = openEditor;
+    if (!primaryButton) return false;
+    const description = primaryButton.querySelector('small');
+    if (description) description.textContent = 'Prévia ao vivo, ícones, textos, tamanho e posição';
+    primaryButton.onclick = openEditor;
+    if (group && !group.contains(primaryButton)) group.remove();
     return true;
   }
 
