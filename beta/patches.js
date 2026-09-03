@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.6');
+  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.8');
   const SPARK_ICON = `<svg class="svg-icon rm-spark-custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21.7734 24.9609" width="24" height="24" aria-hidden="true" focusable="false" stroke="none">
     <g stroke="none">
       <rect height="24.9609" opacity="0" width="21.7734" x="0" y="0"/>
@@ -339,7 +339,7 @@
       exportedAt: createdAt.toISOString(),
       source: {
         environment: 'beta',
-        release: String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.6')
+        release: String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.8')
       },
       compatibility: {
         stableImport: true,
