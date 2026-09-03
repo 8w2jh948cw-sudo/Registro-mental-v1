@@ -131,10 +131,10 @@
         color: var(--text, currentColor);
       }
 
-      /* Registro de medicamento: três campos compactos em uma única linha. */
+      /* Registro de medicamento: a quantidade pertence às compras/estoque. */
       #doseFields.rm-beta-dose-compact {
         display: grid !important;
-        grid-template-columns: minmax(0, 1.18fr) minmax(0, .72fr) minmax(0, .72fr) !important;
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr) !important;
         gap: 10px !important;
         align-items: end !important;
       }
@@ -201,7 +201,7 @@
       @media (max-width: 370px) {
         #doseFields.rm-beta-dose-compact {
           gap: 7px !important;
-          grid-template-columns: minmax(0, 1.15fr) minmax(0, .68fr) minmax(0, .68fr) !important;
+          grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr) !important;
         }
         #doseFields.rm-beta-dose-compact input,
         #doseFields.rm-beta-dose-compact select {
@@ -326,45 +326,23 @@
     }
   }
 
-  function replaceDoseInputsWithoutStickyDefault() {
-    const ids = ['unitDoseValue', 'unitsTaken', 'doseUnit'];
-    const current = ids.map(id => document.getElementById(id));
-    if (current.some(el => !el)) return;
-    if (document.getElementById('unitsTaken')?.dataset.rmBetaEditableQuantity === '1') return;
-
-    for (const el of current) {
-      const clone = el.cloneNode(true);
-      if (el.id === 'unitsTaken') clone.dataset.rmBetaEditableQuantity = '1';
-      el.replaceWith(clone);
-    }
-
-    const unitDose = document.getElementById('unitDoseValue');
+  function removeMedicationQuantityField() {
     const quantity = document.getElementById('unitsTaken');
-    const unit = document.getElementById('doseUnit');
-    const preview = document.getElementById('doseTotalPreview');
+    if (!quantity || quantity.type === 'hidden') return;
 
-    const update = () => {
-      const vRaw = String(unitDose?.value || '').trim().replace(',', '.');
-      const qRaw = String(quantity?.value || '').trim().replace(',', '.');
-      const value = vRaw === '' ? NaN : Number(vRaw);
-      const qty = qRaw === '' ? NaN : Number(qRaw);
-      if (preview) {
-        preview.textContent = Number.isFinite(value) && Number.isFinite(qty)
-          ? `${(value * qty).toLocaleString('pt-BR')} ${unit?.value || 'mg'}`
-          : '—';
-      }
-    };
+    const quantityField = quantity.closest('.field');
+    const hiddenQuantity = document.createElement('input');
+    hiddenQuantity.type = 'hidden';
+    hiddenQuantity.id = 'unitsTaken';
+    hiddenQuantity.value = '1';
+    hiddenQuantity.dataset.rmBetaFixedQuantity = '1';
+    quantityField?.replaceWith(hiddenQuantity);
 
-    [unitDose, quantity, unit].forEach(el => {
-      el?.addEventListener('input', update);
-      el?.addEventListener('change', update);
-    });
+    const doseLabel = document.querySelector('label[for="unitDoseValue"]')
+      || document.getElementById('unitDoseValue')?.closest('.field')?.querySelector('label');
+    if (doseLabel) doseLabel.textContent = 'Dose';
 
-    quantity?.addEventListener('focus', () => {
-      if (quantity.value === '1') setTimeout(() => quantity.select(), 0);
-    });
-
-    update();
+    document.querySelector('#doseFields .dose-result')?.remove();
   }
 
   function refineMedicationSheet() {
@@ -378,7 +356,7 @@
     const doseFields = document.getElementById('doseFields');
     if (doseFields && document.getElementById('unitsTaken')) {
       doseFields.classList.add('rm-beta-dose-compact');
-      replaceDoseInputsWithoutStickyDefault();
+      removeMedicationQuantityField();
     }
   }
 
