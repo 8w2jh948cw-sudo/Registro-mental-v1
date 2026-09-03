@@ -17,7 +17,7 @@ concurrency:
 env:
   STABLE_RELEASE: "1.1.1"
   BETA_BUILD_RELEASE: "1.2.0"
-  BETA_LABEL: "1.2.0-beta.3"
+  BETA_LABEL: "1.2.0-beta.4"
 
 jobs:
   build-and-deploy:
