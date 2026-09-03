@@ -442,7 +442,7 @@
       }
 
       ensureUndoImportRow(dataCard);
-      prepareAdvancedPersonalizationUI(advanced);
+      // O editor seguro é instalado por appearance-editor.js.
     }
 
     const themeControl = document.getElementById('themeControl');
@@ -1091,14 +1091,12 @@
   installBetaUIStyles();
   replaceCloseIcons();
   refineSettingsUI();
-  installSettingsObserver();
 
   let attempts = 0;
   const installer = setInterval(() => {
     attempts += 1;
     replaceCloseIcons();
     refineSettingsUI();
-    installSettingsObserver();
     refineMedicationSheet();
 
     const noteCardsReady = installNoteCardPatch();
@@ -1115,7 +1113,6 @@
   document.addEventListener('registro:release-ready', () => {
     replaceCloseIcons();
     refineSettingsUI();
-    installSettingsObserver();
     installNoteCardPatch();
     installMedicationRegistryPatch();
     installMedicationSheetPatch();

@@ -9,7 +9,7 @@ SITE = ROOT / "site"
 BETA_SOURCE = ROOT / "_beta_site"
 STABLE_RELEASE = os.environ.get("STABLE_RELEASE", "1.1.1").strip()
 BETA_BUILD_RELEASE = os.environ.get("BETA_BUILD_RELEASE", "1.2.0").strip()
-BETA_LABEL = os.environ.get("BETA_LABEL", f"{BETA_BUILD_RELEASE}-beta.7").strip()
+BETA_LABEL = os.environ.get("BETA_LABEL", f"{BETA_BUILD_RELEASE}-beta.8").strip()
 
 if not SITE.exists() or not (SITE / "index.html").exists():
     raise SystemExit("Site Oficial ainda não foi preparado")
@@ -79,6 +79,7 @@ for name in ("boot.js", "launch.html", "patches.js", "recover.html", "safe.html"
 beta_tools = (ROOT / "beta-tools.js").read_text(encoding="utf-8").replace("__BETA_RELEASE__", BETA_LABEL)
 (beta / "beta-tools.js").write_text(beta_tools, encoding="utf-8")
 shutil.copy2(ROOT / "beta-patches.js", beta / "beta-patches.js")
+shutil.copy2(ROOT / "appearance-editor.js", beta / "appearance-editor.js")
 
 beta_index_path = beta / "index.html"
 beta_index = beta_index_path.read_text(encoding="utf-8")
@@ -99,7 +100,7 @@ beta_stamp = f'''
 if 'id="rmBetaReleaseStamp"' not in beta_index:
     beta_index = beta_index.replace('</head>', beta_stamp + '</head>', 1)
 if 'beta-tools.js' not in beta_index:
-    beta_index = beta_index.replace('</body>', f'<script src="./beta-tools.js?v={BETA_LABEL}" defer></script>\n<script src="./beta-patches.js?v={BETA_LABEL}" defer></script>\n</body>', 1)
+    beta_index = beta_index.replace('</body>', f'<script src="./beta-tools.js?v={BETA_LABEL}" defer></script>\n<script src="./beta-patches.js?v={BETA_LABEL}" defer></script>\n<script src="./appearance-editor.js?v={BETA_LABEL}" defer></script>\n</body>', 1)
 beta_index_path.write_text(beta_index, encoding="utf-8")
 
 manifest_path = beta / "manifest.webmanifest"
