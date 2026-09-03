@@ -231,6 +231,76 @@
         background: color-mix(in srgb, var(--danger) 6%, var(--surface)) !important;
       }
 
+      /* Editor de aparência: a prévia fica visível enquanto os controles são ajustados. */
+      .rm-beta-visual-editor { display: grid; gap: 14px; padding-top: 4px; }
+      .rm-beta-visual-preview {
+        position: sticky;
+        top: -10px;
+        z-index: 4;
+        padding: 9px;
+        border: 1px solid var(--separator);
+        border-radius: 20px;
+        background: color-mix(in srgb, var(--surface) 94%, transparent);
+        box-shadow: 0 10px 22px rgba(0,0,0,.10);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+      }
+      .rm-beta-visual-preview-copy { padding: 2px 4px 8px; }
+      .rm-beta-visual-preview-copy strong { display: block; font-size: 13px; }
+      .rm-beta-visual-preview-copy small { display: block; margin-top: 2px; color: var(--secondary); font-size: 11px; }
+      .rm-beta-preview-stage {
+        position: relative;
+        min-height: 148px;
+        overflow: hidden;
+        border: 1px solid var(--separator);
+        border-radius: 15px;
+        background: var(--bg);
+      }
+      .rm-beta-preview-cards { position: absolute; top: 13px; left: 12px; right: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .rm-beta-preview-cards span { height: 59px; border: 1px solid var(--separator); border-radius: 14px; background: var(--surface); }
+      .rm-beta-preview-bar {
+        position: absolute;
+        z-index: 1;
+        display: grid;
+        align-items: stretch;
+        isolation: isolate;
+        overflow: hidden;
+      }
+      .rm-beta-preview-bubble { position: absolute; z-index: 0; pointer-events: none; }
+      .rm-beta-preview-tab {
+        z-index: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .rm-beta-preview-tab > span { display: grid; place-items: center; line-height: 0; }
+      .rm-beta-preview-tab svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .rm-beta-preview-tab small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1; }
+      .rm-beta-editor-section { padding: 13px; border: 1px solid var(--separator); border-radius: 18px; background: var(--surface-2); }
+      .rm-beta-editor-section h3 { margin: 0 0 5px; font-size: 14px; }
+      .rm-beta-editor-section > p { margin: 0 0 9px; color: var(--secondary); font-size: 11px; line-height: 1.35; }
+      .rm-beta-editor-control { padding: 10px 0; border-top: 1px solid var(--separator); }
+      .rm-beta-editor-control:first-of-type { border-top: 0; }
+      .rm-beta-editor-control-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
+      .rm-beta-editor-control label { font-size: 13px; font-weight: 700; }
+      .rm-beta-editor-control output { color: var(--secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+      .rm-beta-editor-control input[type=range] { width: 100%; accent-color: var(--accent); }
+      .rm-beta-editor-switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0 9px; }
+      .rm-beta-editor-switch button { width: 48px; height: 29px; border: 0; border-radius: 999px; padding: 2px; background: var(--tertiary); }
+      .rm-beta-editor-switch button span { display: block; width: 25px; height: 25px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.22); transition: transform .16s ease; }
+      .rm-beta-editor-switch button.is-on { background: var(--accent); }
+      .rm-beta-editor-switch button.is-on span { transform: translateX(19px); }
+      .rm-beta-editor-tabs { display: grid; gap: 8px; }
+      .rm-beta-editor-tab { display: grid; grid-template-columns: 1fr 104px; gap: 8px; }
+      .rm-beta-editor-tab input, .rm-beta-editor-tab select { min-width: 0; width: 100%; border: 1px solid var(--separator); border-radius: 11px; padding: 9px 10px; background: var(--surface); color: var(--text); }
+      .rm-beta-editor-actions { margin-top: -1px; }
+
       @media (max-width: 370px) {
         #doseFields.rm-beta-dose-compact {
           gap: 7px !important;
@@ -372,6 +442,7 @@
       }
 
       ensureUndoImportRow(dataCard);
+      prepareAdvancedPersonalizationUI(advanced);
     }
 
     const themeControl = document.getElementById('themeControl');
@@ -411,6 +482,242 @@
       }
       updateVisualModeNotes();
     }
+  }
+
+  const BETA_NAVIGATION = [
+    { key: 'home', fallback: 'Início' },
+    { key: 'history', fallback: 'Histórico' },
+    { key: 'chart', fallback: 'Análises' },
+    { key: 'settings', fallback: 'Ajustes' }
+  ];
+
+  const BETA_ICON_CHOICES = [
+    ['home', 'Casa'], ['history', 'Histórico'], ['chart', 'Gráfico'], ['settings', 'Ajustes'],
+    ['note', 'Anotação'], ['pill', 'Medicamento'], ['moon', 'Lua'], ['bag', 'Compra'],
+    ['spark', 'Brilho'], ['heart', 'Saúde']
+  ];
+
+  function betaNavIconMarkup(key) {
+    let markup = '';
+    try { markup = window.REGISTRO_NAV_ICONS?.[key] || (typeof baseIcons !== 'undefined' ? baseIcons[key] : ''); } catch (_) {}
+    return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${markup || ''}</svg>`;
+  }
+
+  function betaEditorTheme(settings) {
+    try {
+      if (typeof effectiveRegistroTheme === 'function') return effectiveRegistroTheme(settings);
+    } catch (_) {}
+    return settings.theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function betaCurrentNavigationLabels(settings) {
+    const saved = settings.betaNavigationLabels || {};
+    return Object.fromEntries(BETA_NAVIGATION.map(({ key, fallback }) => {
+      const current = document.querySelector(`.tab-item[data-tab="${key}"] small`)?.textContent?.trim();
+      return [key, saved[key] || current || fallback];
+    }));
+  }
+
+  function applyBetaNavigationLabels(settings = getSettings()) {
+    const labels = settings.betaNavigationLabels || {};
+    BETA_NAVIGATION.forEach(({ key, fallback }) => {
+      const target = document.querySelector(`.tab-item[data-tab="${key}"] small`);
+      if (target) target.textContent = labels[key] || fallback;
+    });
+  }
+
+  function betaEditorDefaults(theme) {
+    return theme === 'dark'
+      ? { barWidth: 95, barHeight: 52, bottomOffset: 10, barPadding: 1, barRadius: 80, barX: 0, barOpacity: .11, bubbleOpacity: .5, iconSize: 31, activeScale: 1.32, iconY: -1, textSize: 8, textWeight: 650, itemGap: 1, hideLabels: true, activeColor: '#000000', inactiveColor: '#ffffff', inactiveOpacity: .48 }
+      : { barWidth: 95, barHeight: 52, bottomOffset: 10, barPadding: 1, barRadius: 80, barX: 0, barOpacity: .11, bubbleOpacity: .25, iconSize: 28, activeScale: 1.32, iconY: -1, textSize: 8, textWeight: 650, itemGap: 1, hideLabels: true, activeColor: '#000000', inactiveColor: '#000000', inactiveOpacity: .61 };
+  }
+
+  function prepareAdvancedPersonalizationUI(group) {
+    if (!group) return;
+    const heading = group.querySelector(':scope > h2');
+    const card = group.querySelector('.settings-card');
+    if (!heading || !card || card.dataset.rmBetaVisualEditor === '1') return;
+
+    heading.textContent = 'Personalizar aparência';
+    card.dataset.rmBetaVisualEditor = '1';
+    card.innerHTML = `
+      <button class="settings-row" id="rmBetaVisualEditorBtn" type="button">
+        <span class="settings-row-icon" data-icon="settings"></span>
+        <span><strong>Editar aparência</strong><small>Ícones, nomes, tamanho, posição e barra inferior</small></span>
+        <span class="chevron">›</span>
+      </button>`;
+    const button = document.getElementById('rmBetaVisualEditorBtn');
+    button.onclick = openBetaVisualEditor;
+    try { if (typeof hydrateIcons === 'function') hydrateIcons(card); } catch (_) {}
+  }
+
+  function installSettingsObserver() {
+    const settingsView = document.querySelector('.view[data-view="settings"]');
+    if (!settingsView || settingsView.dataset.rmBetaSettingsObserved === '1') return;
+    settingsView.dataset.rmBetaSettingsObserved = '1';
+    let scheduled = false;
+    new MutationObserver(() => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(() => {
+        scheduled = false;
+        refineSettingsUI();
+      });
+    }).observe(settingsView, { childList: true, subtree: true });
+  }
+
+  function betaRangeControl(key, label, min, max, step, unit = '') {
+    return `<div class="rm-beta-editor-control"><div class="rm-beta-editor-control-head"><label for="rmBetaEdit-${key}">${label}</label><output id="rmBetaOutput-${key}"></output></div><input id="rmBetaEdit-${key}" data-beta-editor-range="${key}" type="range" min="${min}" max="${max}" step="${step}" data-unit="${unit}"></div>`;
+  }
+
+  function openBetaVisualEditor() {
+    const settings = getSettings();
+    const theme = betaEditorTheme(settings);
+    const draft = {
+      ...betaEditorDefaults(theme),
+      ...(settings.tabBarStyles?.[theme] || {}),
+      labels: betaCurrentNavigationLabels(settings),
+      icons: Object.fromEntries(BETA_NAVIGATION.map(({ key }) => [key, settings.iconOverrides?.[key]?.type === 'bank' ? settings.iconOverrides[key].value : key]))
+    };
+    let selected = 0;
+
+    openBackdrop('Editar aparência', `
+      <div class="rm-beta-visual-editor" id="rmBetaVisualEditor">
+        <section class="rm-beta-visual-preview">
+          <div class="rm-beta-visual-preview-copy"><strong>Prévia ao vivo</strong><small>Toque numa aba da prévia para mover a seleção.</small></div>
+          <div class="rm-beta-preview-stage">
+            <div class="rm-beta-preview-cards"><span></span><span></span></div>
+            <nav class="rm-beta-preview-bar" id="rmBetaPreviewBar" aria-label="Prévia da barra inferior"><span class="rm-beta-preview-bubble" id="rmBetaPreviewBubble"></span></nav>
+          </div>
+        </section>
+
+        <section class="rm-beta-editor-section">
+          <h3>Ícones</h3><p>Ajustes valem para a barra inferior inteira.</p>
+          ${betaRangeControl('iconSize', 'Tamanho dos ícones', 18, 40, 1, 'px')}
+          ${betaRangeControl('iconY', 'Posição vertical', -10, 10, 1, 'px')}
+          ${betaRangeControl('activeScale', 'Destaque da aba ativa', 1, 1.6, .01, '×')}
+        </section>
+
+        <section class="rm-beta-editor-section">
+          <h3>Textos e ícones das abas</h3><p>Você pode renomear cada aba e trocar seu ícone. Nada é aplicado antes de salvar.</p>
+          <div class="rm-beta-editor-switch"><label for="rmBetaEdit-hideLabels">Mostrar nomes das abas</label><button type="button" id="rmBetaEdit-hideLabels" aria-pressed="false"><span></span></button></div>
+          ${betaRangeControl('textSize', 'Tamanho dos textos', 7, 14, 1, 'px')}
+          <div class="rm-beta-editor-tabs">${BETA_NAVIGATION.map(({ key, fallback }) => `<div class="rm-beta-editor-tab"><input id="rmBetaLabel-${key}" data-beta-editor-label="${key}" maxlength="18" aria-label="Nome da aba ${fallback}"><select id="rmBetaIcon-${key}" data-beta-editor-icon="${key}" aria-label="Ícone da aba ${fallback}">${BETA_ICON_CHOICES.map(([value, name]) => `<option value="${value}">${name}</option>`).join('')}</select></div>`).join('')}</div>
+        </section>
+
+        <section class="rm-beta-editor-section">
+          <h3>Barra inferior</h3><p>Altere somente o essencial; os detalhes avançados continuam preservados.</p>
+          ${betaRangeControl('barWidth', 'Largura da barra', 70, 100, 1, '%')}
+          ${betaRangeControl('barHeight', 'Altura da barra', 44, 86, 1, 'px')}
+          ${betaRangeControl('bottomOffset', 'Distância inferior', 2, 34, 1, 'px')}
+          ${betaRangeControl('bubbleOpacity', 'Visibilidade da seleção', 0, 1, .01, '')}
+        </section>
+
+        <div class="form-actions rm-beta-editor-actions"><button type="button" class="secondary-button" id="rmBetaVisualCancel">Cancelar</button><button type="button" class="primary-button" id="rmBetaVisualApply">Salvar e aplicar</button></div>
+      </div>
+    `);
+
+    const render = () => {
+      const bar = document.getElementById('rmBetaPreviewBar');
+      const bubble = document.getElementById('rmBetaPreviewBubble');
+      if (!bar || !bubble) return;
+      bar.innerHTML = '<span class="rm-beta-preview-bubble" id="rmBetaPreviewBubble"></span>';
+      const freshBubble = document.getElementById('rmBetaPreviewBubble');
+      BETA_NAVIGATION.forEach(({ key }, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'rm-beta-preview-tab';
+        button.innerHTML = `<span>${betaNavIconMarkup(draft.icons[key])}</span><small>${esc(draft.labels[key])}</small>`;
+        button.onclick = () => { selected = index; render(); };
+        bar.appendChild(button);
+      });
+      const tabs = [...bar.querySelectorAll('.rm-beta-preview-tab')];
+      const count = tabs.length || 1;
+      bar.style.width = `${Math.min(98, Number(draft.barWidth))}%`;
+      bar.style.height = `${draft.barHeight}px`;
+      bar.style.left = '50%';
+      bar.style.bottom = `${Math.max(2, Number(draft.bottomOffset))}px`;
+      bar.style.padding = `${draft.barPadding}px`;
+      bar.style.borderRadius = `${draft.barRadius}px`;
+      bar.style.transform = `translateX(calc(-50% + ${draft.barX}px))`;
+      bar.style.gridTemplateColumns = `repeat(${count}, minmax(0, 1fr))`;
+      bar.style.background = `color-mix(in srgb, var(--surface) ${Math.round(Number(draft.barOpacity) * 100)}%, transparent)`;
+      bar.style.border = '1px solid var(--separator)';
+      requestAnimationFrame(() => {
+        const innerWidth = Math.max(0, bar.clientWidth - Number(draft.barPadding) * 2);
+        const innerHeight = Math.max(0, bar.clientHeight - Number(draft.barPadding) * 2);
+        const cell = innerWidth / count;
+        const width = cell * .99;
+        freshBubble.style.left = `${Number(draft.barPadding) + selected * cell + (cell - width) / 2}px`;
+        freshBubble.style.top = `${Number(draft.barPadding)}px`;
+        freshBubble.style.width = `${width}px`;
+        freshBubble.style.height = `${innerHeight}px`;
+        freshBubble.style.borderRadius = `${draft.barRadius}px`;
+        freshBubble.style.background = `color-mix(in srgb, var(--accent) ${Math.round(Number(draft.bubbleOpacity) * 100)}%, transparent)`;
+      });
+      tabs.forEach((tab, index) => {
+        const active = index === selected;
+        const icon = tab.querySelector('span');
+        const label = tab.querySelector('small');
+        tab.style.color = active ? draft.activeColor : draft.inactiveColor;
+        tab.style.opacity = String(active ? 1 : draft.inactiveOpacity);
+        tab.style.gap = draft.hideLabels ? '0' : `${draft.itemGap}px`;
+        icon.style.width = `${draft.iconSize}px`;
+        icon.style.height = `${draft.iconSize}px`;
+        icon.style.transform = `translateY(${draft.iconY}px) scale(${active ? draft.activeScale : 1})`;
+        label.style.display = draft.hideLabels ? 'none' : 'block';
+        label.style.fontSize = `${draft.textSize}px`;
+        label.style.fontWeight = String(draft.textWeight);
+      });
+      document.querySelectorAll('[data-beta-editor-range]').forEach(input => {
+        const key = input.dataset.betaEditorRange;
+        input.value = draft[key];
+        const output = document.getElementById(`rmBetaOutput-${key}`);
+        if (output) output.textContent = `${draft[key]}${input.dataset.unit || ''}`;
+      });
+      const switchButton = document.getElementById('rmBetaEdit-hideLabels');
+      if (switchButton) {
+        switchButton.classList.toggle('is-on', !draft.hideLabels);
+        switchButton.setAttribute('aria-pressed', String(!draft.hideLabels));
+      }
+      BETA_NAVIGATION.forEach(({ key }) => {
+        const label = document.getElementById(`rmBetaLabel-${key}`);
+        const icon = document.getElementById(`rmBetaIcon-${key}`);
+        if (label && document.activeElement !== label) label.value = draft.labels[key];
+        if (icon) icon.value = draft.icons[key];
+      });
+    };
+
+    document.querySelectorAll('[data-beta-editor-range]').forEach(input => {
+      input.oninput = () => { draft[input.dataset.betaEditorRange] = Number(input.value); render(); };
+    });
+    document.getElementById('rmBetaEdit-hideLabels').onclick = () => { draft.hideLabels = !draft.hideLabels; render(); };
+    document.querySelectorAll('[data-beta-editor-label]').forEach(input => {
+      input.oninput = () => { draft.labels[input.dataset.betaEditorLabel] = input.value.slice(0, 18) || BETA_NAVIGATION.find(tab => tab.key === input.dataset.betaEditorLabel).fallback; render(); };
+    });
+    document.querySelectorAll('[data-beta-editor-icon]').forEach(select => {
+      select.onchange = () => { draft.icons[select.dataset.betaEditorIcon] = select.value; render(); };
+    });
+    document.getElementById('rmBetaVisualCancel').onclick = closeSheet;
+    document.getElementById('rmBetaVisualApply').onclick = () => {
+      const next = getSettings();
+      next.tabBarStyles = { ...(next.tabBarStyles || {}), [theme]: { ...(next.tabBarStyles?.[theme] || {}), ...Object.fromEntries(Object.entries(draft).filter(([key]) => key !== 'labels' && key !== 'icons')) } };
+      next.hideTabLabels = Boolean(draft.hideLabels);
+      next.betaNavigationLabels = { ...draft.labels };
+      next.iconOverrides = { ...(next.iconOverrides || {}) };
+      BETA_NAVIGATION.forEach(({ key }) => {
+        if (draft.icons[key] === key) delete next.iconOverrides[key];
+        else next.iconOverrides[key] = { type: 'bank', value: draft.icons[key] };
+      });
+      saveSettings(next);
+      applyBetaNavigationLabels(next);
+      try { if (typeof hydrateIcons === 'function') hydrateIcons(document.querySelector('.tab-bar')); } catch (_) {}
+      try { if (typeof applyRegistroTabBar === 'function') applyRegistroTabBar(); } catch (_) {}
+      closeSheet();
+      toast('Aparência aplicada.');
+    };
+    render();
+    replaceCloseIcons();
   }
 
   const IMPORT_UNDO_ID = '__rm_beta_last_import_undo_v1__';
@@ -784,12 +1091,14 @@
   installBetaUIStyles();
   replaceCloseIcons();
   refineSettingsUI();
+  installSettingsObserver();
 
   let attempts = 0;
   const installer = setInterval(() => {
     attempts += 1;
     replaceCloseIcons();
     refineSettingsUI();
+    installSettingsObserver();
     refineMedicationSheet();
 
     const noteCardsReady = installNoteCardPatch();
@@ -806,6 +1115,7 @@
   document.addEventListener('registro:release-ready', () => {
     replaceCloseIcons();
     refineSettingsUI();
+    installSettingsObserver();
     installNoteCardPatch();
     installMedicationRegistryPatch();
     installMedicationSheetPatch();
