@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.3');
+  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.4');
   const STARTED = performance.now();
   const scopeToken = '/Registro-mental-v1/beta/';
   const hadControllerAtStart = Boolean(navigator.serviceWorker?.controller);
