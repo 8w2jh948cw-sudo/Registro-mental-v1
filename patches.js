@@ -143,3 +143,233 @@
   window.REGISTRO_PATCH_RELEASE = RELEASE;
   window.dispatchEvent(new CustomEvent('registro:patches-ready', { detail: { release: RELEASE } }));
 })();
+
+/* RM_OFFICIAL_BACKUP_COMPAT_V1
+   Mantém a Oficial estável e adiciona somente uma ponte segura para backups novos. */
+(() => {
+  'use strict';
+
+  const MAX_BACKUP_FORMAT = 2;
+  const UNDO_ID = '__rm_official_last_import_undo_v1__';
+
+  function requestPromise(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Falha no armazenamento local.'));
+    });
+  }
+
+  function validEvent(item) {
+    return Boolean(item && typeof item.id === 'string' && item.id && typeof item.timestamp === 'string' && item.timestamp && ['note','medication','sleep','purchase'].includes(item.type));
+  }
+
+  function validMedication(item) {
+    return Boolean(item && typeof item.id === 'string' && item.id && typeof item.activeIngredient === 'string' && item.activeIngredient.trim());
+  }
+
+  function uniqueById(items) {
+    return [...new Map(items.map(item => [item.id, { ...item }])).values()];
+  }
+
+  function validateBackup(parsed) {
+    if (Array.isArray(parsed)) return { format: 1, events: parsed, medications: [], settings: null, betaSource: false };
+    if (!parsed || typeof parsed !== 'object') throw new Error('O conteúdo do arquivo não é um backup válido.');
+    const format = Number(parsed.backupFormat || 1);
+    if (!Number.isFinite(format) || format < 1) throw new Error('A versão do formato de backup é inválida.');
+    if (format > MAX_BACKUP_FORMAT) throw new Error(`Este backup usa o formato ${format}. A Oficial 1.1.1 entende até o formato ${MAX_BACKUP_FORMAT}. Use um “Backup para Oficial estável” criado pela Beta.`);
+    if (!Array.isArray(parsed.events)) throw new Error('O arquivo não contém uma lista de registros.');
+    return {
+      format,
+      events: parsed.events,
+      medications: Array.isArray(parsed.medications) ? parsed.medications : [],
+      settings: parsed.settings && typeof parsed.settings === 'object' && !Array.isArray(parsed.settings) ? parsed.settings : null,
+      betaSource: parsed.source?.environment === 'beta',
+      officialCompatible: parsed.kind === 'official-compatible'
+    };
+  }
+
+  async function currentSnapshot() {
+    return { events: await allEvents(), medications: await allMedications(), settings: { ...getSettings() } };
+  }
+
+  async function writeUndo(snapshot) {
+    await requestPromise(store(AUDIO, 'readwrite').put({ id: UNDO_ID, createdAt: new Date().toISOString(), snapshot }));
+  }
+
+  async function readUndo() {
+    try { return await requestPromise(store(AUDIO).get(UNDO_ID)); } catch (_) { return null; }
+  }
+
+  async function deleteUndo() {
+    try { await requestPromise(store(AUDIO, 'readwrite').delete(UNDO_ID)); } catch (_) {}
+  }
+
+  async function replaceWithSnapshot(snapshot) {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([EVENTS, MEDICATIONS], 'readwrite');
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error('Falha ao restaurar os dados.'));
+      tx.onabort = () => reject(tx.error || new Error('Restauração cancelada.'));
+      const eventStore = tx.objectStore(EVENTS);
+      const medicationStore = tx.objectStore(MEDICATIONS);
+      eventStore.clear(); medicationStore.clear();
+      (snapshot.events || []).forEach(item => eventStore.put({ ...item }));
+      (snapshot.medications || []).forEach(item => medicationStore.put({ ...item }));
+    });
+    saveSettings(snapshot.settings || {});
+  }
+
+  async function performImport(parsed, mode) {
+    const info = validateBackup(parsed);
+    const events = uniqueById(info.events.filter(validEvent));
+    const medications = uniqueById(info.medications.filter(validMedication));
+    if (!events.length && !medications.length) throw new Error('Nenhum dado compatível foi encontrado no backup.');
+
+    const before = await currentSnapshot();
+    const previousUndo = await readUndo();
+    await writeUndo(before);
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction([EVENTS, MEDICATIONS], 'readwrite');
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error || new Error('Falha ao gravar o backup.'));
+        tx.onabort = () => reject(tx.error || new Error('Importação cancelada.'));
+        const eventStore = tx.objectStore(EVENTS);
+        const medicationStore = tx.objectStore(MEDICATIONS);
+        if (mode === 'replace') { eventStore.clear(); medicationStore.clear(); }
+        events.forEach(item => eventStore.put(item));
+        medications.forEach(item => medicationStore.put(item));
+      });
+
+      const storedEvents = await allEvents();
+      const storedMeds = await allMedications();
+      const eventIds = new Set(storedEvents.map(item => item.id));
+      const medIds = new Set(storedMeds.map(item => item.id));
+      if (events.some(item => !eventIds.has(item.id)) || medications.some(item => !medIds.has(item.id))) throw new Error('A verificação final não confirmou todos os dados importados.');
+
+      if (mode === 'replace' && info.settings && !info.betaSource) saveSettings({ ...getSettings(), ...info.settings });
+      try { localStorage.setItem('registro-demo-seeded', 'yes'); } catch (_) {}
+      closeSheet();
+      if (typeof renderAll === 'function') await renderAll();
+      refreshUndoRow();
+      toast(`${mode === 'replace' ? 'Backup restaurado' : 'Backup adicionado'}: ${events.length} registro${events.length === 1 ? '' : 's'} e ${medications.length} medicamento${medications.length === 1 ? '' : 's'}.`);
+    } catch (error) {
+      await replaceWithSnapshot(before);
+      if (previousUndo) await requestPromise(store(AUDIO, 'readwrite').put(previousUndo));
+      else await deleteUndo();
+      throw error;
+    }
+  }
+
+  function openChoice(parsed) {
+    const info = validateBackup(parsed);
+    const events = uniqueById(info.events.filter(validEvent));
+    const medications = uniqueById(info.medications.filter(validMedication));
+    const warning = info.betaSource && !info.officialCompatible ? '<div class="analysis-row"><strong>Backup criado na Beta</strong><span>A Oficial importará os dados compatíveis e ignorará configurações experimentais.</span></div>' : '';
+    openBackdrop('Como importar?', `${warning}<div class="analysis-row"><strong>${events.length} registros · ${medications.length} medicamentos</strong><span>Uma cópia do estado atual será guardada antes da importação.</span></div><div class="rm-official-import-actions"><button type="button" class="primary-button full-button" id="rmOfficialMerge">Manter os atuais e adicionar</button><button type="button" class="secondary-button full-button" id="rmOfficialReplace">Apagar os atuais e restaurar o backup</button><button type="button" class="secondary-button full-button" data-cancel>Cancelar</button></div>`);
+    document.getElementById('rmOfficialMerge').onclick = () => runImport(parsed, 'merge');
+    document.getElementById('rmOfficialReplace').onclick = () => runImport(parsed, 'replace');
+  }
+
+  async function runImport(parsed, mode) {
+    try { await performImport(parsed, mode); }
+    catch (error) {
+      console.error('Oficial: falha ao importar backup.', error);
+      alert(`O backup não foi importado.\n\n${error?.message || 'Não foi possível concluir a importação.'}\n\nOs dados anteriores foram restaurados.`);
+    }
+  }
+
+  async function compatibleImport(file) {
+    const parsed = JSON.parse(await file.text());
+    validateBackup(parsed);
+    const [currentEvents, currentMeds] = await Promise.all([allEvents(), allMedications()]);
+    if (!currentEvents.length && !currentMeds.length) return runImport(parsed, 'replace');
+    openChoice(parsed);
+  }
+
+  async function undoLastImport() {
+    const undo = await readUndo();
+    if (!undo?.snapshot) return toast('Não há uma importação para desfazer.');
+    if (!confirm('Desfazer a última importação e voltar exatamente ao estado anterior?')) return;
+    try {
+      await replaceWithSnapshot(undo.snapshot);
+      await deleteUndo();
+      await renderAll();
+      refreshUndoRow();
+      toast('Última importação desfeita.');
+    } catch (error) {
+      console.error('Oficial: falha ao desfazer importação.', error);
+      alert('Não foi possível desfazer a importação.');
+    }
+  }
+
+  async function refreshUndoRow() {
+    const button = document.getElementById('rmOfficialUndoImportBtn');
+    if (!button || typeof db === 'undefined' || !db) return;
+    const undo = await readUndo();
+    button.hidden = !undo?.snapshot;
+    const separator = document.getElementById('rmOfficialUndoImportSeparator');
+    if (separator) separator.hidden = !undo?.snapshot;
+  }
+
+  function ensureUndoRow() {
+    const importButton = document.getElementById('importBtn');
+    if (!importButton) return false;
+    if (!document.getElementById('rmOfficialUndoImportBtn')) {
+      const separator = document.createElement('div');
+      separator.id = 'rmOfficialUndoImportSeparator';
+      separator.className = 'setting-separator inset';
+      separator.hidden = true;
+      const button = document.createElement('button');
+      button.id = 'rmOfficialUndoImportBtn';
+      button.className = 'settings-row';
+      button.hidden = true;
+      button.innerHTML = '<span class="settings-row-icon" data-icon="history"></span><span><strong>Desfazer última importação</strong><small>Restaura o estado anterior</small></span><span class="chevron">›</span>';
+      importButton.insertAdjacentElement('afterend', separator);
+      separator.insertAdjacentElement('afterend', button);
+      button.onclick = undoLastImport;
+      try { hydrateIcons(button); } catch (_) {}
+    }
+    refreshUndoRow();
+    return true;
+  }
+
+  function installImporter() {
+    const input = document.getElementById('importFile');
+    if (!input || typeof window.importData !== 'function') return false;
+    if (input.dataset.rmOfficialCompat === '1') return true;
+    input.dataset.rmOfficialCompat = '1';
+    window.importData = compatibleImport;
+    input.onchange = async event => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      try { await compatibleImport(file); }
+      catch (error) {
+        console.error('Oficial: arquivo de backup recusado.', error);
+        alert(`Este arquivo não pode ser importado.\n\n${error?.message || 'Backup incompatível.'}\n\nNenhum dado atual foi alterado.`);
+      }
+    };
+    ensureUndoRow();
+    return true;
+  }
+
+  function installOfficialCompatStyle() {
+    if (document.getElementById('rm-official-backup-compat-style')) return;
+    const style = document.createElement('style');
+    style.id = 'rm-official-backup-compat-style';
+    style.textContent = '.rm-official-import-actions{display:grid;gap:9px;margin-top:12px}#rmOfficialUndoImportBtn[hidden],#rmOfficialUndoImportSeparator[hidden]{display:none!important}';
+    document.head.appendChild(style);
+  }
+
+  function apply() {
+    installOfficialCompatStyle();
+    installImporter();
+    ensureUndoRow();
+  }
+
+  apply();
+  window.addEventListener('registro:release-ready', apply);
+  document.addEventListener('DOMContentLoaded', apply, { once: true });
+  [100, 350, 900, 1800].forEach(ms => setTimeout(apply, ms));
+})();
