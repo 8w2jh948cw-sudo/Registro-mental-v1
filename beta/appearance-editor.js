@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.8';
+  const RELEASE = '1.2.0-beta.9';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const DEFAULT_ICON = {
     home: 'home',
@@ -242,6 +242,14 @@
   function installSettingsEntry() {
     const groups = [...document.querySelectorAll('.view[data-view="settings"] > .settings-group')];
     const group = groups.find(item => /personaliza[cç][aã]o avan[cç]ada|personalizar apar[eê]ncia/i.test(item.querySelector(':scope > h2')?.textContent || ''));
+    const primaryButton = document.getElementById('rmAppearanceSettingsBtn');
+    if (primaryButton) {
+      const description = primaryButton.querySelector('small');
+      if (description) description.textContent = 'Prévia ao vivo, ícones, textos, tamanho e posição';
+      primaryButton.onclick = openEditor;
+      if (group && !group.contains(primaryButton)) group.remove();
+      return true;
+    }
     const card = group?.querySelector('.settings-card');
     const heading = group?.querySelector(':scope > h2');
     if (!group || !card || !heading) return false;
