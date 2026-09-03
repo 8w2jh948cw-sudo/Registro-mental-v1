@@ -198,6 +198,39 @@
         font-size: 12px !important;
       }
 
+      /* Dados e atualização: ações importantes continuam legíveis sem competir. */
+      .rm-beta-update-row {
+        display: grid !important;
+        grid-template-columns: auto minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: 11px !important;
+        padding: 12px 14px !important;
+      }
+      .rm-beta-update-row .rm-update-button {
+        min-height: 34px !important;
+        padding: 7px 11px !important;
+        white-space: nowrap;
+      }
+      #rmBetaUndoImportBtn[hidden],
+      #rmBetaUndoImportSeparator[hidden] { display: none !important; }
+      #rmBetaUndoImportBtn strong { color: var(--accent, #7d5cff); }
+      .rm-beta-import-choice {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 13px;
+      }
+      .rm-beta-import-choice small {
+        padding: 0 4px;
+        color: var(--secondary);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .rm-beta-import-choice.is-destructive button {
+        color: var(--danger) !important;
+        border-color: color-mix(in srgb, var(--danger) 32%, var(--separator)) !important;
+        background: color-mix(in srgb, var(--danger) 6%, var(--surface)) !important;
+      }
+
       @media (max-width: 370px) {
         #doseFields.rm-beta-dose-compact {
           gap: 7px !important;
@@ -287,6 +320,60 @@
   }
 
   function refineSettingsUI() {
+    const settingsView = document.querySelector('.view[data-view="settings"]');
+    if (settingsView) {
+      const groups = [...settingsView.querySelectorAll(':scope > .settings-group')];
+      const byTitle = title => groups.find(group => normalize(group.querySelector(':scope > h2')?.textContent) === normalize(title));
+      const appearance = byTitle('Aparência');
+      const medication = byTitle('Medicamentos');
+      const health = byTitle('Saúde e sono') || byTitle('Saúde');
+      const advanced = byTitle('Personalização avançada');
+      const data = byTitle('Dados') || byTitle('Dados e atualização');
+      const development = byTitle('Desenvolvimento');
+      const about = byTitle('Sobre');
+
+      if (medication && health) {
+        const medicationRow = medication.querySelector('#medicationRegistryBtn');
+        const healthCard = health.querySelector('.settings-card');
+        if (medicationRow && healthCard) {
+          const separator = document.createElement('div');
+          separator.className = 'setting-separator inset';
+          healthCard.prepend(separator);
+          healthCard.prepend(medicationRow);
+        }
+        medication.remove();
+      }
+      if (health?.querySelector(':scope > h2')) health.querySelector(':scope > h2').textContent = 'Saúde';
+      if (data?.querySelector(':scope > h2')) data.querySelector(':scope > h2').textContent = 'Dados e atualização';
+
+      const header = settingsView.querySelector(':scope > .page-header');
+      let anchor = header;
+      [health, data, appearance, advanced, development, about].filter(Boolean).forEach(group => {
+        anchor.insertAdjacentElement('afterend', group);
+        anchor = group;
+      });
+
+      const updateButton = document.getElementById('rmForceUpdateBtn');
+      const dataCard = data?.querySelector('.settings-card');
+      if (updateButton && dataCard && !document.getElementById('rmBetaUpdateRow')) {
+        const previousHandler = updateButton.onclick;
+        const row = document.createElement('div');
+        row.id = 'rmBetaUpdateRow';
+        row.className = 'settings-row rm-beta-update-row';
+        row.innerHTML = `<span class="settings-row-icon" data-icon="clock"></span><span><strong>Atualizar aplicativo</strong><small>Busca a versão mais recente sem apagar seus dados</small></span>`;
+        updateButton.closest('.rm-update-row')?.remove();
+        row.appendChild(updateButton);
+        updateButton.onclick = previousHandler;
+        const separator = document.createElement('div');
+        separator.className = 'setting-separator inset';
+        dataCard.prepend(separator);
+        dataCard.prepend(row);
+        try { if (typeof hydrateIcons === 'function') hydrateIcons(row); } catch (_) {}
+      }
+
+      ensureUndoImportRow(dataCard);
+    }
+
     const themeControl = document.getElementById('themeControl');
     const themeBlock = themeControl?.closest('.setting-block');
     if (themeBlock) themeBlock.classList.add('rm-beta-theme-row');
@@ -324,6 +411,251 @@
       }
       updateVisualModeNotes();
     }
+  }
+
+  const IMPORT_UNDO_ID = '__rm_beta_last_import_undo_v1__';
+
+  async function readImportUndo() {
+    try { return await req(store(AUDIO).get(IMPORT_UNDO_ID)); }
+    catch (_) { return null; }
+  }
+
+  async function writeImportUndo(record) {
+    return req(store(AUDIO, 'readwrite').put({ id: IMPORT_UNDO_ID, ...record }));
+  }
+
+  async function deleteImportUndo() {
+    try { await req(store(AUDIO, 'readwrite').delete(IMPORT_UNDO_ID)); } catch (_) {}
+  }
+
+  function ensureUndoImportRow(dataCard) {
+    if (!dataCard) return;
+    let button = document.getElementById('rmBetaUndoImportBtn');
+    if (!button) {
+      const importButton = document.getElementById('importBtn');
+      if (!importButton) return;
+      const separator = document.createElement('div');
+      separator.id = 'rmBetaUndoImportSeparator';
+      separator.className = 'setting-separator inset';
+      separator.hidden = true;
+      button = document.createElement('button');
+      button.id = 'rmBetaUndoImportBtn';
+      button.className = 'settings-row';
+      button.hidden = true;
+      button.innerHTML = `<span class="settings-row-icon" data-icon="history"></span><span><strong>Desfazer última importação</strong><small id="rmBetaUndoImportStatus">Restaura os dados anteriores</small></span><span class="chevron">›</span>`;
+      importButton.insertAdjacentElement('afterend', separator);
+      separator.insertAdjacentElement('afterend', button);
+      button.onclick = openUndoImportConfirmation;
+      try { if (typeof hydrateIcons === 'function') hydrateIcons(button); } catch (_) {}
+    }
+    refreshUndoImportRow();
+  }
+
+  async function refreshUndoImportRow() {
+    const button = document.getElementById('rmBetaUndoImportBtn');
+    const separator = document.getElementById('rmBetaUndoImportSeparator');
+    if (!button || !separator || typeof db === 'undefined' || !db) return;
+    const undo = await readImportUndo();
+    button.hidden = !undo?.snapshot;
+    separator.hidden = !undo?.snapshot;
+    const status = document.getElementById('rmBetaUndoImportStatus');
+    if (status && undo?.createdAt) {
+      status.textContent = `Voltar ao estado anterior à importação de ${new Date(undo.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`;
+    }
+  }
+
+  async function currentBackupSnapshot() {
+    return {
+      events: await allEvents(),
+      medications: await allMedications(),
+      settings: { ...getSettings() }
+    };
+  }
+
+  function replaceDataWithSnapshot(snapshot) {
+    const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
+    const medications = Array.isArray(snapshot?.medications) ? snapshot.medications : [];
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([EVENTS, MEDICATIONS], 'readwrite');
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error || new Error('Falha ao restaurar os dados anteriores.'));
+      transaction.onabort = () => reject(transaction.error || new Error('A restauração foi cancelada.'));
+      const eventStore = transaction.objectStore(EVENTS);
+      const medicationStore = transaction.objectStore(MEDICATIONS);
+      eventStore.clear();
+      medicationStore.clear();
+      events.forEach(item => eventStore.put({ ...item }));
+      medications.forEach(item => medicationStore.put({ ...item }));
+    });
+  }
+
+  function validBackupEvent(item) {
+    return Boolean(item && typeof item.id === 'string' && item.id && typeof item.timestamp === 'string' && item.timestamp && ['note', 'medication', 'sleep', 'purchase'].includes(item.type));
+  }
+
+  function validBackupMedication(item) {
+    return Boolean(item && typeof item.id === 'string' && item.id && typeof item.activeIngredient === 'string' && item.activeIngredient.trim());
+  }
+
+  function uniqueById(items) {
+    return [...new Map(items.map(item => [item.id, { ...item }])).values()];
+  }
+
+  async function importBackupParsed(parsed, mode) {
+    const sourceEvents = Array.isArray(parsed) ? parsed : parsed?.events;
+    const events = uniqueById(sourceEvents.filter(validBackupEvent));
+    const medications = uniqueById(Array.isArray(parsed?.medications) ? parsed.medications.filter(validBackupMedication) : []);
+    const before = await currentBackupSnapshot();
+    const previousUndo = await readImportUndo();
+
+    await writeImportUndo({ createdAt: new Date().toISOString(), snapshot: before });
+    try {
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction([EVENTS, MEDICATIONS], 'readwrite');
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error || new Error('Falha ao gravar o backup.'));
+        transaction.onabort = () => reject(transaction.error || new Error('A importação foi cancelada.'));
+        const eventStore = transaction.objectStore(EVENTS);
+        const medicationStore = transaction.objectStore(MEDICATIONS);
+        if (mode === 'replace') {
+          eventStore.clear();
+          medicationStore.clear();
+        }
+        events.forEach(item => eventStore.put(item));
+        medications.forEach(item => medicationStore.put(item));
+      });
+
+      const storedEvents = await allEvents();
+      const storedMedications = await allMedications();
+      const eventIds = new Set(storedEvents.map(item => item.id));
+      const medicationIds = new Set(storedMedications.map(item => item.id));
+      const verifiedEvents = events.filter(item => eventIds.has(item.id)).length;
+      const verifiedMedications = medications.filter(item => medicationIds.has(item.id)).length;
+      const exact = mode !== 'replace' || (storedEvents.length === events.length && storedMedications.length === medications.length);
+      if (verifiedEvents !== events.length || verifiedMedications !== medications.length || !exact) throw new Error('A verificação final não confirmou todos os dados importados.');
+
+      if (mode === 'replace') {
+        const settings = parsed?.settings && typeof parsed.settings === 'object' && !Array.isArray(parsed.settings) ? parsed.settings : {};
+        saveSettings({ ...defaultSettings, ...settings });
+      }
+      localStorage.setItem('registro-beta-demo-seeded', 'yes');
+      closeSheet();
+      if (typeof rmInvalidate === 'function') rmInvalidate();
+      switchTab('history');
+      if (typeof rmRenderActive === 'function') await rmRenderActive('history', { force: true });
+      else await renderAll();
+      await refreshUndoImportRow();
+      const action = mode === 'replace' ? 'Backup restaurado' : 'Backup adicionado aos dados atuais';
+      toast(`${action}: ${verifiedEvents} registro${verifiedEvents === 1 ? '' : 's'} e ${verifiedMedications} medicamento${verifiedMedications === 1 ? '' : 's'}.`);
+    } catch (error) {
+      try {
+        await replaceDataWithSnapshot(before);
+        saveSettings(before.settings || {});
+        if (previousUndo) await writeImportUndo(previousUndo);
+        else await deleteImportUndo();
+      } catch (rollbackError) {
+        console.error('Beta: também falhou ao reverter a importação.', rollbackError);
+      }
+      throw error;
+    }
+  }
+
+  function openImportChoice(parsed, events, medications, ignored) {
+    const count = `${events.length} registro${events.length === 1 ? '' : 's'} e ${medications.length} medicamento${medications.length === 1 ? '' : 's'}`;
+    openBackdrop('Como importar?', `
+      <div class="analysis-row rm-v34-import-summary"><strong>O backup contém ${esc(count)}</strong><span>Já existem dados neste aparelho.${ignored ? ` ${ignored} item${ignored === 1 ? '' : 's'} inválido${ignored === 1 ? '' : 's'} será${ignored === 1 ? '' : 'ão'} ignorado${ignored === 1 ? '' : 's'}.` : ''}</span></div>
+      <div class="rm-beta-import-choice">
+        <button type="button" class="primary-button full-button" id="rmBetaImportMerge">Manter os atuais e adicionar o backup</button>
+        <small>Opção recomendada. Preserva seus registros atuais e evita duplicações.</small>
+      </div>
+      <div class="rm-beta-import-choice is-destructive">
+        <button type="button" class="secondary-button full-button" id="rmBetaImportReplace">Apagar os atuais e restaurar o backup</button>
+        <small>Deixa somente o conteúdo do backup. Uma cópia para desfazer será criada antes.</small>
+      </div>
+      <button type="button" class="secondary-button full-button" data-cancel>Cancelar</button>
+    `);
+    document.getElementById('rmBetaImportMerge').onclick = () => runParsedImport(parsed, 'merge');
+    document.getElementById('rmBetaImportReplace').onclick = () => runParsedImport(parsed, 'replace');
+    replaceCloseIcons();
+  }
+
+  async function runParsedImport(parsed, mode) {
+    try {
+      toast(mode === 'replace' ? 'Restaurando backup…' : 'Adicionando backup…');
+      await importBackupParsed(parsed, mode);
+    } catch (error) {
+      console.error('Beta: falha ao importar backup.', error);
+      alert(`O backup não foi importado.\n\n${error?.message || 'Não foi possível concluir a importação.'}\n\nOs dados anteriores foram restaurados.`);
+      toast('Falha ao importar o backup.');
+    }
+  }
+
+  async function betaImportData(file) {
+    try {
+      const parsed = JSON.parse(await file.text());
+      const sourceEvents = Array.isArray(parsed) ? parsed : parsed?.events;
+      if (!Array.isArray(sourceEvents)) throw new Error('O arquivo não contém uma lista de registros.');
+      const events = uniqueById(sourceEvents.filter(validBackupEvent));
+      const medications = uniqueById(Array.isArray(parsed?.medications) ? parsed.medications.filter(validBackupMedication) : []);
+      if (!events.length && !medications.length) throw new Error('Nenhum registro válido foi encontrado no backup.');
+      const [currentEvents, currentMedications] = await Promise.all([allEvents(), allMedications()]);
+      if (!currentEvents.length && !currentMedications.length) {
+        await runParsedImport(parsed, 'replace');
+        return;
+      }
+      openImportChoice(parsed, events, medications, sourceEvents.length - events.length);
+    } catch (error) {
+      console.error('Beta: arquivo de backup inválido.', error);
+      alert(`Este arquivo não pode ser importado.\n\n${error?.message || 'Não foi possível ler o arquivo.'}\n\nNenhum dado atual foi alterado.`);
+      toast('Arquivo de backup inválido.');
+    }
+  }
+
+  function openUndoImportConfirmation() {
+    openBackdrop('Desfazer importação?', `
+      <div class="analysis-row"><strong>Voltar ao estado anterior</strong><span>Os dados ficarão exatamente como estavam antes da última importação. Registros criados depois dela serão removidos.</span></div>
+      <div class="form-actions">
+        <button type="button" class="secondary-button" data-cancel>Cancelar</button>
+        <button type="button" class="primary-button" id="rmBetaConfirmUndo">Desfazer importação</button>
+      </div>
+    `);
+    document.getElementById('rmBetaConfirmUndo').onclick = undoLastImport;
+    replaceCloseIcons();
+  }
+
+  async function undoLastImport() {
+    const undo = await readImportUndo();
+    if (!undo?.snapshot) return toast('Não há uma importação para desfazer.');
+    try {
+      toast('Desfazendo importação…');
+      await replaceDataWithSnapshot(undo.snapshot);
+      saveSettings(undo.snapshot.settings || {});
+      await deleteImportUndo();
+      closeSheet();
+      if (typeof rmInvalidate === 'function') rmInvalidate();
+      switchTab('history');
+      if (typeof rmRenderActive === 'function') await rmRenderActive('history', { force: true });
+      else await renderAll();
+      await refreshUndoImportRow();
+      toast('Última importação desfeita.');
+    } catch (error) {
+      console.error('Beta: falha ao desfazer importação.', error);
+      alert('Não foi possível desfazer a importação. Nenhuma exclusão adicional foi feita.');
+    }
+  }
+
+  function installBackupImportPatch() {
+    if (typeof window.importData !== 'function' || !document.getElementById('importFile')) return false;
+    if (window.importData.__rmBetaSafeImport) return true;
+    betaImportData.__rmBetaSafeImport = true;
+    window.importData = betaImportData;
+    document.getElementById('importFile').onchange = event => {
+      const file = event.target.files?.[0];
+      if (file) betaImportData(file);
+      event.target.value = '';
+    };
+    refreshUndoImportRow();
+    return true;
   }
 
   function removeMedicationQuantityField() {
@@ -464,8 +796,9 @@
     const registryReady = installMedicationRegistryPatch();
     const sheetReady = installMedicationSheetPatch();
     const doseReady = installDoseFieldsPatch();
+    const backupReady = installBackupImportPatch();
 
-    if ((noteCardsReady && registryReady && sheetReady && doseReady) || attempts >= 200) {
+    if ((noteCardsReady && registryReady && sheetReady && doseReady && backupReady) || attempts >= 200) {
       clearInterval(installer);
     }
   }, 75);
@@ -477,5 +810,6 @@
     installMedicationRegistryPatch();
     installMedicationSheetPatch();
     installDoseFieldsPatch();
+    installBackupImportPatch();
   }, { once: true });
 })();
