@@ -1,0 +1,30 @@
+name: Validate backup bridge
+
+on:
+  push:
+    branches:
+      - backup-bridge-beta-official
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check patches.js
+          node --check beta/patches.js
+          node --check beta/beta-tools.js
+      - name: Check bridge markers and isolation
+        run: |
+          grep -q 'RM_CROSS_ENV_BACKUP_BRIDGE_V1' patches.js
+          grep -q 'RM_CROSS_ENV_BACKUP_BRIDGE_V1' beta/patches.js
+          grep -q '"release": "1.2.0-beta.11"' beta/environment.json
+          grep -q '"database": "registro-mental-beta-v1"' beta/environment.json
+          grep -q '"environment": "production"' environment.json
+          grep -q '"release": "1.1.1"' environment.json
+          grep -q "current:\"beta\"" beta/patches.js || grep -q '"current":"beta"' beta/patches.js
+          grep -q "current:\"official\"" patches.js || grep -q '"current":"official"' patches.js
