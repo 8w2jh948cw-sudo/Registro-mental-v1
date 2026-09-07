@@ -578,3 +578,431 @@
   document.addEventListener('DOMContentLoaded', applySafetyAndAppearance, { once: true });
   [80, 300, 900, 1800, 3200].forEach(ms => setTimeout(applySafetyAndAppearance, ms));
 })();
+
+
+/* RM_CROSS_ENV_BACKUP_BRIDGE_V1
+   Ponte manual e reversível entre Beta e Oficial. O ambiente atual é o único que recebe escrita. */
+(() => {
+  'use strict';
+
+  const CFG = {"current":"beta","ownDb":"registro-mental-beta-v1","otherDb":"registro-mental-v1","otherLabel":"Oficial","undoId":"__rm_beta_last_import_undo_v1__","demoSeedKey":"registro-beta-demo-seeded","bridgeLastKey":"registro-beta-last-cross-bridge","lastBackupKey":"registro-beta-last-backup","filePrefix":"Registro-Mental-Beta_para-Oficial","otherUrl":"../","outgoingToken":"from-beta","incomingToken":"from-official"};
+  const BACKUP_FORMAT = 2;
+  const KNOWN_EVENT_TYPES = new Set(['note', 'medication', 'sleep', 'purchase']);
+  let incomingHandled = false;
+
+  function requestPromise(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Falha ao acessar o armazenamento local.'));
+    });
+  }
+
+  function openDatabase(name, mustExist = true) {
+    return new Promise((resolve, reject) => {
+      let missing = false;
+      const request = indexedDB.open(name);
+      request.onupgradeneeded = event => {
+        if (mustExist && event.oldVersion === 0) {
+          missing = true;
+          try { request.transaction.abort(); } catch (_) {}
+          return;
+        }
+        const database = request.result;
+        if (!database.objectStoreNames.contains('events')) {
+          const events = database.createObjectStore('events', { keyPath: 'id' });
+          events.createIndex('timestamp', 'timestamp');
+          events.createIndex('type', 'type');
+        }
+        if (!database.objectStoreNames.contains('audio')) database.createObjectStore('audio', { keyPath: 'id' });
+        if (!database.objectStoreNames.contains('medications')) database.createObjectStore('medications', { keyPath: 'id' });
+      };
+      request.onsuccess = () => {
+        if (missing) {
+          try { request.result.close(); } catch (_) {}
+          reject(new Error(`A versão ${CFG.otherLabel} ainda não possui um banco local neste iPhone.`));
+          return;
+        }
+        resolve(request.result);
+      };
+      request.onerror = () => reject(missing
+        ? new Error(`A versão ${CFG.otherLabel} ainda não possui um banco local neste iPhone.`)
+        : (request.error || new Error('Não foi possível abrir o banco local.')));
+    });
+  }
+
+  async function readStore(database, name) {
+    if (!database.objectStoreNames.contains(name)) return [];
+    return requestPromise(database.transaction(name, 'readonly').objectStore(name).getAll());
+  }
+
+  async function readData(databaseName, mustExist = true) {
+    const database = await openDatabase(databaseName, mustExist);
+    try {
+      const [events, medications] = await Promise.all([
+        readStore(database, 'events'),
+        readStore(database, 'medications')
+      ]);
+      return { events, medications };
+    } finally {
+      database.close();
+    }
+  }
+
+  function validEvent(item) {
+    return Boolean(item && typeof item.id === 'string' && item.id &&
+      typeof item.timestamp === 'string' && item.timestamp &&
+      KNOWN_EVENT_TYPES.has(item.type));
+  }
+
+  function validMedication(item) {
+    return Boolean(item && typeof item.id === 'string' && item.id &&
+      typeof item.activeIngredient === 'string' && item.activeIngredient.trim());
+  }
+
+  function uniqueById(items) {
+    return [...new Map(items.map(item => [item.id, { ...item }])).values()];
+  }
+
+  function normalizeData(raw) {
+    const events = uniqueById((Array.isArray(raw?.events) ? raw.events : []).filter(validEvent));
+    const medications = uniqueById((Array.isArray(raw?.medications) ? raw.medications : []).filter(validMedication));
+    return { events, medications };
+  }
+
+  function currentSettingsSnapshot() {
+    try {
+      return typeof getSettings === 'function' ? { ...getSettings() } : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  async function currentSnapshot() {
+    const data = normalizeData(await readData(CFG.ownDb, true));
+    return { ...data, settings: currentSettingsSnapshot() };
+  }
+
+  async function readUndoRaw() {
+    const database = await openDatabase(CFG.ownDb, true);
+    try {
+      if (!database.objectStoreNames.contains('audio')) return null;
+      return requestPromise(database.transaction('audio', 'readonly').objectStore('audio').get(CFG.undoId));
+    } catch (_) {
+      return null;
+    } finally {
+      database.close();
+    }
+  }
+
+  async function writeUndoRaw(record) {
+    const database = await openDatabase(CFG.ownDb, true);
+    try {
+      if (!database.objectStoreNames.contains('audio')) throw new Error('Armazenamento de segurança indisponível.');
+      await requestPromise(database.transaction('audio', 'readwrite').objectStore('audio').put(record));
+    } finally {
+      database.close();
+    }
+  }
+
+  async function deleteUndoRaw() {
+    const database = await openDatabase(CFG.ownDb, true);
+    try {
+      if (database.objectStoreNames.contains('audio')) {
+        await requestPromise(database.transaction('audio', 'readwrite').objectStore('audio').delete(CFG.undoId));
+      }
+    } catch (_) {
+    } finally {
+      database.close();
+    }
+  }
+
+  async function writeData(snapshot, mode) {
+    const database = await openDatabase(CFG.ownDb, true);
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = database.transaction(['events', 'medications'], 'readwrite');
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error || new Error('Falha ao gravar os dados.'));
+        tx.onabort = () => reject(tx.error || new Error('A transferência foi cancelada.'));
+        const events = tx.objectStore('events');
+        const medications = tx.objectStore('medications');
+        if (mode === 'replace') {
+          events.clear();
+          medications.clear();
+        }
+        snapshot.events.forEach(item => events.put({ ...item }));
+        snapshot.medications.forEach(item => medications.put({ ...item }));
+      });
+    } finally {
+      database.close();
+    }
+  }
+
+  async function restoreSnapshot(snapshot) {
+    await writeData({ events: snapshot.events || [], medications: snapshot.medications || [] }, 'replace');
+    try {
+      if (typeof saveSettings === 'function' && snapshot.settings) saveSettings(snapshot.settings);
+    } catch (_) {}
+  }
+
+  function revealUndoRow() {
+    const ids = CFG.current === 'beta'
+      ? ['rmBetaUndoImportBtn', 'rmBetaUndoImportSeparator']
+      : ['rmOfficialUndoImportBtn', 'rmOfficialUndoImportSeparator'];
+    ids.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.hidden = false;
+    });
+  }
+
+  async function refreshAfterImport() {
+    try {
+      localStorage.setItem(CFG.demoSeedKey, 'yes');
+      localStorage.setItem(CFG.bridgeLastKey, new Date().toISOString());
+    } catch (_) {}
+    revealUndoRow();
+    try { if (typeof rmInvalidate === 'function') rmInvalidate(); } catch (_) {}
+    try {
+      if (typeof switchTab === 'function') switchTab('history');
+      if (typeof rmRenderActive === 'function') await rmRenderActive('history', { force: true });
+      else if (typeof renderAll === 'function') await renderAll();
+    } catch (error) {
+      console.warn('Ponte: dados transferidos, mas a interface não atualizou imediatamente.', error);
+    }
+  }
+
+  async function importFromOther(source, mode) {
+    const before = await currentSnapshot();
+    const previousUndo = await readUndoRaw();
+    await writeUndoRaw({
+      id: CFG.undoId,
+      createdAt: new Date().toISOString(),
+      reason: 'cross-environment-bridge',
+      snapshot: before
+    });
+
+    try {
+      await writeData(source, mode);
+      const stored = normalizeData(await readData(CFG.ownDb, true));
+      const eventIds = new Set(stored.events.map(item => item.id));
+      const medicationIds = new Set(stored.medications.map(item => item.id));
+      if (source.events.some(item => !eventIds.has(item.id)) ||
+          source.medications.some(item => !medicationIds.has(item.id))) {
+        throw new Error('A verificação final não confirmou todos os dados transferidos.');
+      }
+      await refreshAfterImport();
+      try { if (typeof closeSheet === 'function') closeSheet(); } catch (_) {}
+      const action = mode === 'replace' ? 'Dados substituídos' : 'Dados adicionados';
+      if (typeof toast === 'function') {
+        toast(`${action}: ${source.events.length} registro${source.events.length === 1 ? '' : 's'} e ${source.medications.length} medicamento${source.medications.length === 1 ? '' : 's'}.`);
+      }
+    } catch (error) {
+      try {
+        await restoreSnapshot(before);
+        if (previousUndo) await writeUndoRaw(previousUndo);
+        else await deleteUndoRaw();
+      } catch (rollbackError) {
+        console.error('Ponte: também falhou ao restaurar o estado anterior.', rollbackError);
+      }
+      throw error;
+    }
+  }
+
+  async function openReceivePreview() {
+    try {
+      const rawSource = await readData(CFG.otherDb, true);
+      const source = normalizeData(rawSource);
+      if (!source.events.length && !source.medications.length) {
+        throw new Error(`A versão ${CFG.otherLabel} não possui registros ou medicamentos para transferir.`);
+      }
+      const current = normalizeData(await readData(CFG.ownDb, true));
+      if (typeof openBackdrop !== 'function') throw new Error('A interface de confirmação ainda não está pronta.');
+
+      openBackdrop(`Receber da ${CFG.otherLabel}?`, `
+        <div class="analysis-row">
+          <strong>${source.events.length} registros · ${source.medications.length} medicamentos</strong>
+          <span>A ${CFG.otherLabel} será apenas lida. Nenhum dado dela será apagado ou alterado.</span>
+        </div>
+        <div class="analysis-row">
+          <strong>Neste ambiente: ${current.events.length} registros · ${current.medications.length} medicamentos</strong>
+          <span>Configurações visuais não são transferidas pela ponte direta.</span>
+        </div>
+        <div class="rm-cross-bridge-actions">
+          <button type="button" class="primary-button full-button" id="rmCrossBridgeMerge">Manter os atuais e adicionar</button>
+          <button type="button" class="secondary-button full-button" id="rmCrossBridgeReplace">Substituir os dados deste ambiente</button>
+          <button type="button" class="secondary-button full-button" data-cancel>Cancelar</button>
+        </div>
+      `);
+
+      document.getElementById('rmCrossBridgeMerge').onclick = async () => {
+        try {
+          await importFromOther(source, 'merge');
+        } catch (error) {
+          console.error('Ponte: falha ao somar os dados.', error);
+          alert(`A transferência não foi concluída.\n\n${error?.message || 'Não foi possível importar os dados.'}\n\nO estado anterior foi restaurado.`);
+        }
+      };
+
+      document.getElementById('rmCrossBridgeReplace').onclick = async () => {
+        if (!confirm(`Substituir os dados atuais deste ambiente pelos dados da ${CFG.otherLabel}?\n\nUma cópia para Desfazer será criada antes.`)) return;
+        try {
+          await importFromOther(source, 'replace');
+        } catch (error) {
+          console.error('Ponte: falha ao substituir os dados.', error);
+          alert(`A transferência não foi concluída.\n\n${error?.message || 'Não foi possível importar os dados.'}\n\nO estado anterior foi restaurado.`);
+        }
+      };
+    } catch (error) {
+      console.error('Ponte: não foi possível preparar a transferência.', error);
+      alert(`Não foi possível receber dados da ${CFG.otherLabel}.\n\n${error?.message || 'A outra versão não respondeu.'}`);
+    }
+  }
+
+  function pad2(value) {
+    return String(value).padStart(2, '0');
+  }
+
+  function filenameStamp() {
+    const date = new Date();
+    return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}_${pad2(date.getHours())}-${pad2(date.getMinutes())}-${pad2(date.getSeconds())}`;
+  }
+
+  function downloadJson(payload, filename) {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  async function exportInterchangeBackup() {
+    try {
+      const data = normalizeData(await readData(CFG.ownDb, true));
+      const release = String(window.REGISTRO_SHELL_RELEASE || window.REGISTRO_V1_RELEASE || window.REGISTRO_CURRENT_RELEASE || '');
+      const payload = {
+        app: 'Registro Mental',
+        backupFormat: BACKUP_FORMAT,
+        kind: 'cross-environment',
+        exportedAt: new Date().toISOString(),
+        source: {
+          environment: CFG.current === 'beta' ? 'beta' : 'production',
+          release
+        },
+        compatibility: {
+          betaImport: true,
+          stableImport: true,
+          minimumOfficial: '1.1.1',
+          transferPolicy: 'data-and-settings-in-file'
+        },
+        counts: {
+          events: data.events.length,
+          medications: data.medications.length
+        },
+        events: data.events,
+        medications: data.medications,
+        settings: currentSettingsSnapshot()
+      };
+      downloadJson(payload, `${CFG.filePrefix}_${filenameStamp()}.json`);
+      try { localStorage.setItem(CFG.lastBackupKey, new Date().toISOString()); } catch (_) {}
+      try { if (typeof renderBackupState === 'function') renderBackupState(); } catch (_) {}
+      if (typeof toast === 'function') toast(`Backup para ${CFG.otherLabel} criado.`);
+    } catch (error) {
+      console.error('Ponte: falha ao criar backup JSON.', error);
+      alert('Não foi possível criar o backup de intercâmbio.');
+    }
+  }
+
+  function openOtherToReceive() {
+    const url = new URL(CFG.otherUrl, location.href);
+    url.searchParams.set('bridge', CFG.outgoingToken);
+    url.searchParams.set('ts', String(Date.now()));
+    location.href = url.href;
+  }
+
+  function ensureStyles() {
+    if (document.getElementById('rm-cross-env-bridge-style')) return;
+    const style = document.createElement('style');
+    style.id = 'rm-cross-env-bridge-style';
+    style.textContent = `
+      .rm-cross-bridge-actions{display:grid;gap:9px;margin-top:12px}
+      #rmCrossEnvBridgeGroup .settings-card{overflow:hidden}
+      #rmCrossEnvBridgeGroup .settings-row small{line-height:1.35}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensureBridgeUi() {
+    const importButton = document.getElementById('importBtn');
+    const dataGroup = importButton?.closest('.settings-group');
+    if (!importButton || !dataGroup) return false;
+
+    let group = document.getElementById('rmCrossEnvBridgeGroup');
+    if (!group) {
+      group = document.createElement('section');
+      group.id = 'rmCrossEnvBridgeGroup';
+      group.className = 'settings-group';
+      group.innerHTML = `
+        <h2>Integração Beta ↔ Oficial</h2>
+        <div class="settings-card list-card">
+          <button type="button" class="settings-row" id="rmCrossReceiveBtn">
+            <span class="settings-row-icon" data-icon="import"></span>
+            <span><strong>Receber da ${CFG.otherLabel}</strong><small>Lê a outra versão e permite somar ou substituir com Desfazer</small></span>
+            <span class="chevron">›</span>
+          </button>
+          <div class="setting-separator inset"></div>
+          <button type="button" class="settings-row" id="rmCrossSendBtn">
+            <span class="settings-row-icon" data-icon="export"></span>
+            <span><strong>Enviar para a ${CFG.otherLabel}</strong><small>Abre a ${CFG.otherLabel}, que pedirá confirmação antes de receber</small></span>
+            <span class="chevron">›</span>
+          </button>
+          <div class="setting-separator inset"></div>
+          <button type="button" class="settings-row" id="rmCrossJsonBtn">
+            <span class="settings-row-icon" data-icon="export"></span>
+            <span><strong>Backup para a ${CFG.otherLabel} em JSON</strong><small>Arquivo compatível com as duas versões, com data e horário no nome</small></span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+        <p class="group-footnote">A ponte direta transfere registros e medicamentos. Aparência e preferências continuam separadas entre Beta e Oficial.</p>
+      `;
+      dataGroup.insertAdjacentElement('afterend', group);
+      try { if (typeof hydrateIcons === 'function') hydrateIcons(group); } catch (_) {}
+    }
+
+    const receive = document.getElementById('rmCrossReceiveBtn');
+    const send = document.getElementById('rmCrossSendBtn');
+    const json = document.getElementById('rmCrossJsonBtn');
+    if (receive) receive.onclick = openReceivePreview;
+    if (send) send.onclick = openOtherToReceive;
+    if (json) json.onclick = exportInterchangeBackup;
+    return true;
+  }
+
+  function handleIncomingBridge() {
+    if (incomingHandled) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('bridge') !== CFG.incomingToken) return;
+    incomingHandled = true;
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('bridge');
+      url.searchParams.delete('ts');
+      history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    } catch (_) {}
+    setTimeout(openReceivePreview, 220);
+  }
+
+  function applyBridge() {
+    ensureStyles();
+    ensureBridgeUi();
+    handleIncomingBridge();
+  }
+
+  applyBridge();
+  window.addEventListener('registro:release-ready', applyBridge);
+  document.addEventListener('DOMContentLoaded', applyBridge, { once: true });
+  [120, 400, 1000, 2200].forEach(ms => setTimeout(applyBridge, ms));
+})();
