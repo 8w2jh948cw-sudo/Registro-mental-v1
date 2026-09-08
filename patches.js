@@ -799,5 +799,5 @@
   applyBridge();
   window.addEventListener('registro:release-ready', applyBridge);
   document.addEventListener('DOMContentLoaded', applyBridge, { once: true });
-  [120, 400, 1000, 2200].forEach(ms => setTimeout(applyBridge, ms));
+  [120, 400, 1000, 2200, 4000, 7000, 10000].forEach(ms => setTimeout(applyBridge, ms));
 })();

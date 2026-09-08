@@ -12,7 +12,7 @@ FLUXO
 4. Formatar início e fim como datas ISO.
 5. Montar uma URL no formato:
 
-https://8w2jh948cw-sudo.github.io/Registro-mental-pwa/?import=sleep&sleepStart=INICIO_ISO&sleepEnd=FIM_ISO
+https://viniciusnevesdev.github.io/Registro-mental-v1/?import=sleep&sleepStart=INICIO_ISO&sleepEnd=FIM_ISO
 
 Opcionalmente também podem ser enviados:
 &sleepQuality=1 a 5

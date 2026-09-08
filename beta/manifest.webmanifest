@@ -6,7 +6,7 @@
   "background_color": "#f5f5f7",
   "theme_color": "#f5f5f7",
   "description": "Diário pessoal local para anotações, medicamentos, sono, compras e análises temporais.",
-  "id": "./beta/",
+  "id": "./",
   "scope": "./",
   "prefer_related_applications": false,
   "display_override": [

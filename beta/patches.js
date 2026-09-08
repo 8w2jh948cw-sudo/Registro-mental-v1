@@ -116,8 +116,8 @@
   function paintRelease() {
     const top = document.getElementById('topVersion');
     const about = document.getElementById('versionLabel');
-    if (top) top.textContent = `v${RELEASE}`;
-    if (about) about.textContent = RELEASE;
+    if (top && top.textContent !== `v${RELEASE}`) top.textContent = `v${RELEASE}`;
+    if (about && about.textContent !== RELEASE) about.textContent = RELEASE;
   }
 
   function applyAll() {
@@ -133,7 +133,7 @@
   applyAll();
   window.addEventListener('registro:release-ready', applyAll);
   document.addEventListener('DOMContentLoaded', applyAll, { once: true });
-  [0, 250, 900, 1800].forEach(ms => setTimeout(applyAll, ms));
+  [0, 250, 900, 1800, 3200, 5000, 7000, 9000].forEach(ms => setTimeout(applyAll, ms));
   document.addEventListener('click', event => {
     if (event.target.closest('.tab-item, #customIconsBtn, #rmForceUpdateBtn')) {
       setTimeout(applyAll, 0);
@@ -1004,5 +1004,5 @@
   applyBridge();
   window.addEventListener('registro:release-ready', applyBridge);
   document.addEventListener('DOMContentLoaded', applyBridge, { once: true });
-  [120, 400, 1000, 2200].forEach(ms => setTimeout(applyBridge, ms));
+  [120, 400, 1000, 2200, 4000, 7000, 10000].forEach(ms => setTimeout(applyBridge, ms));
 })();
