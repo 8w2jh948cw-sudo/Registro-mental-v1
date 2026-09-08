@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.1.6 — correção segura de aparência. */
+/* Registro Mental Oficial 1.1.7 — aparência segura e paleta personalizada fixa. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.1.6';
+  const RELEASE = '1.1.7';
   const SETTINGS_KEY = 'registro-settings-v2';
   const COLORS = {
     accent: '#7259D6',
@@ -39,7 +39,7 @@
       if (!raw) return;
       const settings = JSON.parse(raw);
       let changed = false;
-      ['accent','palette','paleta','colorPalette','colourPalette','visualPalette','themePalette','semanticPalette'].forEach(key => {
+      ['palette','paleta','colorPalette','colourPalette','visualPalette','themePalette','semanticPalette'].forEach(key => {
         if (Object.prototype.hasOwnProperty.call(settings, key)) {
           delete settings[key];
           changed = true;
@@ -55,7 +55,6 @@
 
   function applyColors() {
     const html = document.documentElement;
-    html.removeAttribute('data-accent');
     html.style.setProperty('--accent', COLORS.accent, 'important');
     html.style.setProperty('--record-note', COLORS.note, 'important');
     html.style.setProperty('--record-med', COLORS.med, 'important');
@@ -91,8 +90,12 @@
       [data-icon="pill"]{color:var(--record-med)!important}
       [data-icon="moon"]{color:var(--record-sleep)!important}
       [data-icon="bag"]{color:var(--record-buy)!important}
-      .kind-note{color:var(--record-note)!important}.kind-medication{color:var(--record-med)!important}.kind-sleep{color:var(--record-sleep)!important}.kind-purchase{color:var(--record-buy)!important}
-      .primary-action{--rm-card-accent:var(--record-note)!important}.primary-action .action-icon,.primary-action strong{color:var(--record-note)!important}
+      .kind-note{color:var(--record-note)!important}
+      .kind-medication{color:var(--record-med)!important}
+      .kind-sleep{color:var(--record-sleep)!important}
+      .kind-purchase{color:var(--record-buy)!important}
+      .primary-action{--rm-card-accent:var(--record-note)!important}
+      .primary-action .action-icon,.primary-action strong{color:var(--record-note)!important}
       .med-action{--rm-card-accent:var(--record-med)!important}.med-action .action-icon{color:var(--record-med)!important}
       .sleep-action{--rm-card-accent:var(--record-sleep)!important}.sleep-action .action-icon{color:var(--record-sleep)!important}
       .buy-action{--rm-card-accent:var(--record-buy)!important}.buy-action .action-icon{color:var(--record-buy)!important}
@@ -101,12 +104,18 @@
       .tab-item{opacity:1!important}.tab-item:not(.selected){color:var(--secondary)!important}
       html:not([data-hide-tab-labels="true"]) .tab-item small,html:not([data-hide-tab-labels="true"]) .tab-item .tab-label{display:block!important;visibility:visible!important;opacity:.92!important;font-size:8px!important;line-height:1.05!important}
       html[data-hide-tab-labels="true"] .tab-item small,html[data-hide-tab-labels="true"] .tab-item .tab-label{display:none!important}
-      html:not([data-theme="dark"]) .tab-item.selected{color:#17171A!important}html[data-theme="dark"] .tab-item.selected{color:#F2F2F4!important}@media(prefers-color-scheme:dark){html[data-theme="system"] .tab-item.selected{color:#F2F2F4!important}}
+      html:not([data-theme="dark"]) .tab-item.selected{color:#17171A!important}
+      html[data-theme="dark"] .tab-item.selected{color:#F2F2F4!important}
+      @media(prefers-color-scheme:dark){html[data-theme="system"] .tab-item.selected{color:#F2F2F4!important}}
 
       #historyFilters.filter-scroll{overflow-x:auto!important;overflow-y:visible!important;padding-top:8px!important;padding-bottom:10px!important;margin-top:-8px!important;margin-bottom:-10px!important;scroll-padding-inline:4px}
       #historyFilters .filter-chip{position:relative!important}
 
-      #accentControl,.accent-options,#semanticPaletteControl,[data-accent],[data-semantic-palette],[data-palette-control],[data-color-palette],.semantic-palette-swatches,.semantic-palette-note{display:none!important}
+      /* Importante: nunca esconder o elemento HTML por possuir data-accent/data-semantic-palette. */
+      #accentControl,.accent-options,#semanticPaletteControl,
+      button[data-accent],button[data-semantic-palette],
+      .setting-block:has(#accentControl),.setting-block:has(#semanticPaletteControl),
+      .semantic-palette-swatches,.semantic-palette-note{display:none!important}
     `;
   }
 
@@ -122,7 +131,9 @@
   window.addEventListener('registro:release-ready', () => { try { applyAll(); } catch (_) {} });
   [100,500,1500,3000].forEach(ms => setTimeout(() => { try { applyAll(); } catch (_) {} }, ms));
   document.addEventListener('click', event => {
-    if (event.target.closest('.tab-item,[data-theme-value],#hideTabLabelsToggle,#homeOptionsBtn')) setTimeout(() => { try { applyAll(); } catch (_) {} }, 0);
+    if (event.target.closest('.tab-item,[data-theme-value],#hideTabLabelsToggle,#homeOptionsBtn')) {
+      setTimeout(() => { try { applyAll(); } catch (_) {} }, 0);
+    }
   }, { passive:true });
 
   window.REGISTRO_OFFICIAL_APPEARANCE_READY = true;
