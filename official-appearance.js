@@ -1,90 +1,26 @@
-/* Registro Mental Oficial 1.1.3 — aparência consolidada após validação da Beta. */
+/* Registro Mental Oficial 1.1.4 — aparência consolidada após validação da Beta. */
 (() => {
   'use strict';
-
-  const RELEASE = '1.1.3';
-  const SETTINGS_KEY = 'registro-settings-v2';
-  const FIXED_ACCENT = '#7259d6';
-  const FIXED_ACCENT_SOFT = '#eeeaff';
-  const FIXED_ACCENT_STRONG = '#533ab7';
-  const FIXED_ACCENT_SOFT_DARK = '#2d2741';
-  const FIXED_ACCENT_STRONG_DARK = '#c9bfff';
-
-  function normalize(value = '') { return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase(); }
-
-  function paintRelease() {
-    window.REGISTRO_V1_RELEASE = RELEASE;
-    window.REGISTRO_EXPECTED_RELEASE = RELEASE;
-    window.REGISTRO_CURRENT_RELEASE = RELEASE;
-    const top = document.getElementById('topVersion');
-    const about = document.getElementById('versionLabel');
-    if (top) top.textContent = `v${RELEASE}`;
-    if (about) about.textContent = RELEASE;
-    let style = document.getElementById('rm-official-release-current');
-    if (!style) { style = document.createElement('style'); style.id = 'rm-official-release-current'; document.head.appendChild(style); }
-    style.textContent = `#topVersion::after{content:"v${RELEASE}"!important}#versionLabel::after{content:"${RELEASE}"!important}`;
-  }
-
-  function cleanPersistedAppearance() {
-    try {
-      const raw = localStorage.getItem(SETTINGS_KEY); if (!raw) return;
-      const settings = JSON.parse(raw); let changed = false;
-      ['accent','palette','paleta','colorPalette','colourPalette','visualPalette','themePalette'].forEach(key => {
-        if (Object.prototype.hasOwnProperty.call(settings,key)) { delete settings[key]; changed = true; }
-      });
-      if (changed) localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
-    } catch (_) {}
-  }
-
-  function installFixedPalette() {
-    const html = document.documentElement;
-    html.removeAttribute('data-accent');
-    html.style.setProperty('--accent',FIXED_ACCENT);
-    html.style.setProperty('--accent-soft',FIXED_ACCENT_SOFT);
-    html.style.setProperty('--accent-strong',FIXED_ACCENT_STRONG);
-    let style = document.getElementById('rm-official-fixed-palette');
-    if (!style) { style = document.createElement('style'); style.id = 'rm-official-fixed-palette'; document.head.appendChild(style); }
-    style.textContent = `
-      :root,html,html[data-theme="light"],html[data-theme="system"]{--accent:${FIXED_ACCENT}!important;--accent-soft:${FIXED_ACCENT_SOFT}!important;--accent-strong:${FIXED_ACCENT_STRONG}!important}
-      html[data-theme="dark"]{--accent:${FIXED_ACCENT}!important;--accent-soft:${FIXED_ACCENT_SOFT_DARK}!important;--accent-strong:${FIXED_ACCENT_STRONG_DARK}!important}
-      @media(prefers-color-scheme:dark){html[data-theme="system"]{--accent:${FIXED_ACCENT}!important;--accent-soft:${FIXED_ACCENT_SOFT_DARK}!important;--accent-strong:${FIXED_ACCENT_STRONG_DARK}!important}}
-      .tab-bar,.capsule-tabbar{background:color-mix(in srgb,var(--surface) 94%,transparent)!important;border-color:color-mix(in srgb,var(--separator) 88%,var(--surface))!important;backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important}
-      .tab-item{opacity:1!important}.tab-item:not(.selected){color:var(--secondary)!important}.tab-item small{opacity:.92!important}
-      html:not([data-theme="dark"]) .tab-item.selected{color:#17171a!important}
-      html[data-theme="light"] .tab-item.selected{color:#17171a!important}
-      html[data-theme="dark"] .tab-item.selected{color:#f2f2f4!important}
-      @media(prefers-color-scheme:dark){html[data-theme="system"] .tab-item.selected{color:#f2f2f4!important}}
-      #accentControl,.accent-options,[data-palette-control],[data-color-palette]{display:none!important}
-    `;
-  }
-
-  function removeChoiceBlock(control) {
-    const block = control?.closest('.setting-block,.setting-inline,.settings-row'); if (!block) return;
-    const next = block.nextElementSibling, prev = block.previousElementSibling;
-    if (next?.classList.contains('setting-separator')) next.remove(); else if (prev?.classList.contains('setting-separator')) prev.remove();
-    block.remove();
-  }
-
-  function removeLegacyAppearanceChoices() {
-    removeChoiceBlock(document.getElementById('accentControl'));
-    document.querySelectorAll('.view[data-view="settings"] .setting-block,.view[data-view="settings"] .setting-inline,.view[data-view="settings"] .settings-row').forEach(block => {
-      const text = normalize(block.textContent || '');
-      if (text.includes('cor principal') || text.includes('paleta de cores') || text.startsWith('paleta')) removeChoiceBlock(block);
-    });
-    document.querySelectorAll('[data-accent],.accent-options,[data-palette-control],[data-color-palette]').forEach(node => {
-      const block = node.closest('.setting-block,.setting-inline,.settings-row'); if (block) removeChoiceBlock(block); else node.remove();
-    });
-  }
-
-  function lockRuntimeAccent() {
-    const html = document.documentElement; html.removeAttribute('data-accent'); html.style.setProperty('--accent',FIXED_ACCENT,'important');
-  }
-
-  function applyAll() { paintRelease(); cleanPersistedAppearance(); installFixedPalette(); removeLegacyAppearanceChoices(); lockRuntimeAccent(); }
-  applyAll();
-  document.addEventListener('DOMContentLoaded',applyAll,{once:true});
-  window.addEventListener('registro:release-ready',applyAll);
-  [0,100,250,700,1500,3000].forEach(ms => setTimeout(applyAll,ms));
-  document.addEventListener('click',event => { if (event.target.closest('[data-tab="settings"],#homeOptionsBtn,.tab-item')) setTimeout(applyAll,0); },{passive:true});
-  window.REGISTRO_OFFICIAL_APPEARANCE_READY = true;
+  const RELEASE='1.1.4',SETTINGS_KEY='registro-settings-v2';
+  const FIXED_ACCENT='#7259d6',FIXED_ACCENT_SOFT='#eeeaff',FIXED_ACCENT_STRONG='#533ab7',FIXED_ACCENT_SOFT_DARK='#2d2741',FIXED_ACCENT_STRONG_DARK='#c9bfff';
+  const normalize=(value='')=>String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  function paintRelease(){window.REGISTRO_V1_RELEASE=RELEASE;window.REGISTRO_EXPECTED_RELEASE=RELEASE;window.REGISTRO_CURRENT_RELEASE=RELEASE;const top=document.getElementById('topVersion'),about=document.getElementById('versionLabel');if(top)top.textContent=`v${RELEASE}`;if(about)about.textContent=RELEASE;let style=document.getElementById('rm-official-release-current');if(!style){style=document.createElement('style');style.id='rm-official-release-current';document.head.appendChild(style)}style.textContent=`#topVersion::after{content:"v${RELEASE}"!important}#versionLabel::after{content:"${RELEASE}"!important}`}
+  function cleanPersistedAppearance(){try{const raw=localStorage.getItem(SETTINGS_KEY);if(!raw)return;const settings=JSON.parse(raw);let changed=false;['accent','palette','paleta','colorPalette','colourPalette','visualPalette','themePalette'].forEach(key=>{if(Object.prototype.hasOwnProperty.call(settings,key)){delete settings[key];changed=true}});if(changed)localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}catch(_){}}
+  function installFixedPalette(){const html=document.documentElement;html.removeAttribute('data-accent');html.style.setProperty('--accent',FIXED_ACCENT);html.style.setProperty('--accent-soft',FIXED_ACCENT_SOFT);html.style.setProperty('--accent-strong',FIXED_ACCENT_STRONG);let style=document.getElementById('rm-official-fixed-palette');if(!style){style=document.createElement('style');style.id='rm-official-fixed-palette';document.head.appendChild(style)}style.textContent=`
+:root,html,html[data-theme="light"],html[data-theme="system"]{--accent:${FIXED_ACCENT}!important;--accent-soft:${FIXED_ACCENT_SOFT}!important;--accent-strong:${FIXED_ACCENT_STRONG}!important}
+html[data-theme="dark"]{--accent:${FIXED_ACCENT}!important;--accent-soft:${FIXED_ACCENT_SOFT_DARK}!important;--accent-strong:${FIXED_ACCENT_STRONG_DARK}!important}
+@media(prefers-color-scheme:dark){html[data-theme="system"]{--accent:${FIXED_ACCENT}!important;--accent-soft:${FIXED_ACCENT_SOFT_DARK}!important;--accent-strong:${FIXED_ACCENT_STRONG_DARK}!important}}
+.tab-bar,.capsule-tabbar{background:color-mix(in srgb,var(--surface) 94%,transparent)!important;border-color:color-mix(in srgb,var(--separator) 88%,var(--surface))!important;backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important}
+.tab-item{opacity:1!important}.tab-item:not(.selected){color:var(--secondary)!important}.tab-item small,.tab-item .tab-label{display:block!important;visibility:visible!important;opacity:.92!important;font-size:8px!important;line-height:1.05!important}
+html:not([data-theme="dark"]) .tab-item.selected{color:#17171a!important}html[data-theme="light"] .tab-item.selected{color:#17171a!important}html[data-theme="dark"] .tab-item.selected{color:#f2f2f4!important}@media(prefers-color-scheme:dark){html[data-theme="system"] .tab-item.selected{color:#f2f2f4!important}}
+/* Os filtros do Histórico precisam reservar área para a sombra; o scroll continua apenas horizontal. */
+#historyFilters.filter-scroll{overflow-x:auto!important;overflow-y:visible!important;padding-top:8px!important;padding-bottom:10px!important;margin-top:-8px!important;margin-bottom:-10px!important;scroll-padding-inline:4px}
+#historyFilters .filter-chip{position:relative!important}
+#accentControl,.accent-options,[data-palette-control],[data-color-palette]{display:none!important}`}
+  function removeChoiceBlock(control){const block=control?.closest('.setting-block,.setting-inline,.settings-row');if(!block)return;const next=block.nextElementSibling,prev=block.previousElementSibling;if(next?.classList.contains('setting-separator'))next.remove();else if(prev?.classList.contains('setting-separator'))prev.remove();block.remove()}
+  function removeLegacyAppearanceChoices(){removeChoiceBlock(document.getElementById('accentControl'));document.querySelectorAll('.view[data-view="settings"] .setting-block,.view[data-view="settings"] .setting-inline,.view[data-view="settings"] .settings-row').forEach(block=>{const text=normalize(block.textContent||'');if(text.includes('cor principal')||text.includes('paleta de cores')||text.startsWith('paleta'))removeChoiceBlock(block)});document.querySelectorAll('[data-accent],.accent-options,[data-palette-control],[data-color-palette]').forEach(node=>{const block=node.closest('.setting-block,.setting-inline,.settings-row');if(block)removeChoiceBlock(block);else node.remove()})}
+  function lockRuntimeAccent(){const html=document.documentElement;html.removeAttribute('data-accent');html.style.setProperty('--accent',FIXED_ACCENT,'important')}
+  function ensureTabLabelsDefault(){try{const raw=localStorage.getItem(SETTINGS_KEY);if(!raw)return;const settings=JSON.parse(raw);const keys=['showTabLabels','tabLabels','showTabText'];if(!keys.some(k=>Object.prototype.hasOwnProperty.call(settings,k))){settings.showTabLabels=true;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}}catch(_){}}
+  function applyAll(){paintRelease();cleanPersistedAppearance();ensureTabLabelsDefault();installFixedPalette();removeLegacyAppearanceChoices();lockRuntimeAccent()}
+  applyAll();document.addEventListener('DOMContentLoaded',applyAll,{once:true});window.addEventListener('registro:release-ready',applyAll);[0,100,250,700,1500,3000].forEach(ms=>setTimeout(applyAll,ms));document.addEventListener('click',event=>{if(event.target.closest('[data-tab="settings"],#homeOptionsBtn,.tab-item'))setTimeout(applyAll,0)},{passive:true});window.REGISTRO_OFFICIAL_APPEARANCE_READY=true;
 })();
