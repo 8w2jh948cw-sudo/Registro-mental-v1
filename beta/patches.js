@@ -120,6 +120,14 @@
     if (about && about.textContent !== RELEASE) about.textContent = RELEASE;
   }
 
+  function guardReleaseDuringBoot() {
+    const targets = [document.getElementById('topVersion'), document.getElementById('versionLabel')].filter(Boolean);
+    if (!targets.length || typeof MutationObserver !== 'function') return;
+    const observer = new MutationObserver(paintRelease);
+    targets.forEach(target => observer.observe(target, { childList: true, characterData: true, subtree: true }));
+    setTimeout(() => observer.disconnect(), 30000);
+  }
+
   function applyAll() {
     installStyles();
     removeIconWeightSetting();
@@ -129,8 +137,9 @@
     paintRelease();
   }
 
-  // Sem MutationObserver permanente: evita loops, gasto de CPU e regressões no Safari.
+  // A observação fica restrita aos dois rótulos e termina após o boot.
   applyAll();
+  guardReleaseDuringBoot();
   window.addEventListener('registro:release-ready', applyAll);
   document.addEventListener('DOMContentLoaded', applyAll, { once: true });
   [0, 250, 900, 1800, 3200, 5000, 7000, 9000].forEach(ms => setTimeout(applyAll, ms));
