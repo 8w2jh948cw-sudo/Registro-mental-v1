@@ -205,7 +205,7 @@
   window.addEventListener('error', event => {
     const source = String(event.filename || '');
     const message = event.message || 'Erro JavaScript';
-    if (/app\.js|patches\.js|boot\.js/i.test(source) || appScriptLoaded) {
+    if (/app\.js|patches\.js|official-appearance\.js|boot\.js/i.test(source) || appScriptLoaded) {
       lastFatal = { message, source };
       log('error', message, source ? source.split('/').pop() : 'runtime');
     }
@@ -297,8 +297,9 @@
       setMessage('Finalizando', 'Aplicando correções e personalizações…');
       setProgress(74);
       await loadScript('./patches.js', 8000);
+      await loadScript('./official-appearance.js', 8000);
       setStep('patches', 'ok', 'aplicadas');
-      log('ok', 'Correções finais carregadas');
+      log('ok', 'Correções finais e aparência consolidada carregadas');
     } catch (error) {
       setStep('patches', 'warn', 'parcial');
       log('warn', 'Correções finais não carregaram', error?.message || error);
