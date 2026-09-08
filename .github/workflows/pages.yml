@@ -53,8 +53,12 @@ jobs:
             const modules = [...source.matchAll(/s\.text=("(?:[^"\\]|\\.)*");document\.head\.appendChild/g)];
             if (modules.length < 30) throw new Error(`${file}: apenas ${modules.length} módulos incorporados encontrados.`);
             modules.forEach((match, index) => new vm.Script(JSON.parse(match[1]), { filename: `${file}#${index + 1}` }));
-            if (source.includes("\\nconst top=document.getElementById('topVersion')")) {
+            const releaseGlobals = [...source.matchAll(/\\nconst ([A-Za-z][A-Za-z0-9]*)=document\.getElementById\('topVersion'\)/g)].map(match => match[1]);
+            if (releaseGlobals.includes('top')) {
               throw new Error(`${file}: declaração global incompatível com window.top.`);
+            }
+            if (new Set(releaseGlobals).size !== releaseGlobals.length) {
+              throw new Error(`${file}: identificador global de versão repetido entre módulos.`);
             }
             if (!source.includes('while(!db&&attempts<200)')) {
               throw new Error(`${file}: migração emocional não aguarda o banco local.`);
