@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.11');
+  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.12');
   const STARTED = performance.now();
   const scopeToken = '/Registro-mental-v1/beta/';
   const hadControllerAtStart = Boolean(navigator.serviceWorker?.controller);
@@ -44,6 +44,23 @@
   function setStep(name, state, text) { const row = document.querySelector(`[data-boot-step="${name}"]`); if (!row) return; row.dataset.state = state; const value = row.querySelector('[data-boot-value]'); if (value) value.textContent = text; }
   function setProgress(value) { if (progress) progress.style.width = `${Math.max(4, Math.min(100, value))}%`; }
   function setMessage(title, subtitle) { if (headline) headline.textContent = title; if (detail) detail.textContent = subtitle; }
+  function copyTextLegacy(text) {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      const copied = typeof document.execCommand === 'function' && document.execCommand('copy');
+      textarea.remove();
+      return Boolean(copied);
+    } catch (_) {
+      return false;
+    }
+  }
 
   async function inspectRuntime() {
     let registrations = null, cacheKeys = null;
@@ -141,7 +158,26 @@
   recoverButton?.addEventListener('click', () => { location.href = `./recover.html?v=${encodeURIComponent(RELEASE)}&from=boot&recover=${Date.now()}`; });
   copyButton?.addEventListener('click', async () => {
     const payload = [`Registro Mental ${RELEASE}`, `URL: ${location.href}`, `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`, `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`, `Controlador residual agora: ${navigator.serviceWorker?.controller ? 'sim' : 'não'}`, `Online: ${navigator.onLine ? 'sim' : 'não'}`, `User agent: ${navigator.userAgent}`, '', ...window.__RM_BOOT_DIAGNOSTICS.map(item => `${item.t}ms ${item.kind}: ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)].join('\n');
-    try { await navigator.clipboard.writeText(payload); copyButton.textContent = 'Diagnóstico copiado'; } catch (_) { if (diagnostics) { diagnostics.hidden = false; diagnostics.textContent = payload; } }
+    copyButton.disabled = true;
+    copyButton.textContent = 'Copiando…';
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await withTimeout(navigator.clipboard.writeText(payload), 1200, 'Cópia do diagnóstico');
+        copied = true;
+      }
+    } catch (_) {}
+    if (!copied) copied = copyTextLegacy(payload);
+    if (copied) {
+      copyButton.textContent = 'Diagnóstico copiado';
+    } else {
+      if (diagnostics) { diagnostics.hidden = false; diagnostics.textContent = payload; }
+      copyButton.textContent = 'Diagnóstico exibido abaixo';
+    }
+    setTimeout(() => {
+      copyButton.disabled = false;
+      copyButton.textContent = 'Copiar diagnóstico';
+    }, 2400);
   });
 
   async function start() {

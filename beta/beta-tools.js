@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const BETA_RELEASE = '1.2.0-beta.11';
+  const BETA_RELEASE = '1.2.0-beta.12';
   const PROD_DB = 'registro-mental-v1';
   const BETA_DB = 'registro-mental-beta-v1';
   const PROD_SETTINGS = 'registro-settings-v2';

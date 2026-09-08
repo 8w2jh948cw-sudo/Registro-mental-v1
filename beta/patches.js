@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.11');
+  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.12');
   const SPARK_ICON = `<svg class="svg-icon rm-spark-custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21.7734 24.9609" width="24" height="24" aria-hidden="true" focusable="false" stroke="none">
     <g stroke="none">
       <rect height="24.9609" opacity="0" width="21.7734" x="0" y="0"/>
@@ -120,14 +120,6 @@
     if (about && about.textContent !== RELEASE) about.textContent = RELEASE;
   }
 
-  function guardReleaseDuringBoot() {
-    const targets = [document.getElementById('topVersion'), document.getElementById('versionLabel')].filter(Boolean);
-    if (!targets.length || typeof MutationObserver !== 'function') return;
-    const observer = new MutationObserver(paintRelease);
-    targets.forEach(target => observer.observe(target, { childList: true, characterData: true, subtree: true }));
-    setTimeout(() => observer.disconnect(), 30000);
-  }
-
   function applyAll() {
     installStyles();
     removeIconWeightSetting();
@@ -137,9 +129,8 @@
     paintRelease();
   }
 
-  // A observação fica restrita aos dois rótulos e termina após o boot.
+  // Sem observador de versão: evita disputa de escrita e ciclo de microtarefas no Safari.
   applyAll();
-  guardReleaseDuringBoot();
   window.addEventListener('registro:release-ready', applyAll);
   document.addEventListener('DOMContentLoaded', applyAll, { once: true });
   [0, 250, 900, 1800, 3200, 5000, 7000, 9000].forEach(ms => setTimeout(applyAll, ms));
@@ -348,7 +339,7 @@
       exportedAt: createdAt.toISOString(),
       source: {
         environment: 'beta',
-        release: String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.11')
+        release: String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.12')
       },
       compatibility: {
         stableImport: true,
