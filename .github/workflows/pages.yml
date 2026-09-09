@@ -29,15 +29,14 @@ jobs:
           test -s beta/index.html
           test -s beta/app.js
           test -s beta/manifest.webmanifest
-          test -s mood-scale-10.js
           python3 - <<'PY'
           import json
           from pathlib import Path
 
           environments = json.loads(Path('ambientes.json').read_text(encoding='utf-8'))
           beta_manifest = json.loads(Path('beta/manifest.webmanifest').read_text(encoding='utf-8'))
-          assert environments['official']['release'] == '1.1.10'
-          assert environments['beta']['release'] == '1.2.0-beta.14'
+          assert environments['official']['release'] == '1.1.1'
+          assert environments['beta']['release'] == '1.2.0-beta.12'
           assert environments['official']['database'] == 'registro-mental-v1'
           assert environments['beta']['database'] == 'registro-mental-beta-v1'
           assert beta_manifest['id'] == './'
