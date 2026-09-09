@@ -1,0 +1,44 @@
+name: Executar correção do boot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'trigger-bootfix.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  bootfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Aplicar correção
+        run: python3 tools/bootfix.py
+
+      - name: Commitar arquivos corrigidos
+        run: |
+          git config user.name "Vinicius"
+          git config user.email "viniciusnevez123@gmail.com"
+          git add index.html boot.js beta/index.html beta/boot.js official-appearance.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Corrige travamento do boot e cópia de diagnóstico"
+            git push origin main
+          fi
+
+      - name: Criar ZIP do PWA
+        run: |
+          rm -f Registro-Mental-PWA-1.1.10.zip
+          zip -r Registro-Mental-PWA-1.1.10.zip . -x '.git/*' -x 'Registro-Mental-PWA-1.1.10.zip'
+
+      - name: Publicar ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Registro-Mental-PWA-1.1.10
+          path: Registro-Mental-PWA-1.1.10.zip
+          if-no-files-found: error
+          retention-days: 30
