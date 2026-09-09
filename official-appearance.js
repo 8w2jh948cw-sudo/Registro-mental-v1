@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.1.7 — aparência segura e paleta personalizada fixa. */
+/* Registro Mental Oficial 1.1.8 — aparência segura e paleta personalizada fixa. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.1.7';
+  const RELEASE = '1.1.8';
   const SETTINGS_KEY = 'registro-settings-v2';
   const COLORS = {
     accent: '#7259D6',
@@ -111,7 +111,7 @@
       #historyFilters.filter-scroll{overflow-x:auto!important;overflow-y:visible!important;padding-top:8px!important;padding-bottom:10px!important;margin-top:-8px!important;margin-bottom:-10px!important;scroll-padding-inline:4px}
       #historyFilters .filter-chip{position:relative!important}
 
-      /* Importante: nunca esconder o elemento HTML por possuir data-accent/data-semantic-palette. */
+      /* Nunca esconder html/body por atributos de aparência. */
       #accentControl,.accent-options,#semanticPaletteControl,
       button[data-accent],button[data-semantic-palette],
       .setting-block:has(#accentControl),.setting-block:has(#semanticPaletteControl),
