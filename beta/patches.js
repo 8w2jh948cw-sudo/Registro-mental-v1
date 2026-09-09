@@ -34,6 +34,7 @@
     paintRelease();
     try{
       await load(`../mood-scale-10.js?v=${encodeURIComponent(RELEASE)}&load=${nonce}`);
+      await load(`../mood-scale-10-dbfix.js?v=${encodeURIComponent(RELEASE)}&load=${nonce}`);
     }catch(error){
       console.error('Registro Beta: escala emocional 0–10 não carregou',error);
     }
