@@ -1,8 +1,8 @@
-/* Registro Mental Beta 1.2.0-beta.13 — base estável sincronizada com a Oficial 1.1.9. */
+/* Registro Mental Beta 1.2.0-beta.14 — base estável sincronizada com a Oficial 1.1.10. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.13';
+  const RELEASE = '1.2.0-beta.14';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const DIAG_KEY = 'registro-beta-last-diagnostic-v1';
   const COLORS = {
@@ -66,6 +66,8 @@
 
   function applyColors() {
     const html = document.documentElement;
+    delete html.dataset.accent;
+    delete html.dataset.semanticPalette;
     html.style.setProperty('--accent', COLORS.accent, 'important');
     html.style.setProperty('--record-note', COLORS.note, 'important');
     html.style.setProperty('--record-med', COLORS.med, 'important');

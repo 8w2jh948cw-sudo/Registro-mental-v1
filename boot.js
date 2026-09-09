@@ -46,6 +46,10 @@
   const nowMs = () => Math.round(performance.now() - STARTED);
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const twoPaints = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const withTimeout = (promise, ms, label) => Promise.race([
+    Promise.resolve(promise),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} excedeu ${ms} ms`)), ms))
+  ]);
 
   function log(kind, message, extra = '') {
     const entry = { t: nowMs(), kind, message, extra: extra ? String(extra) : '' };
@@ -350,7 +354,7 @@
   async function waitForFunctionalState(timeoutMs = 6500) {
     const started = performance.now();
     while (performance.now() - started < timeoutMs) {
-      if (releaseEventSeen || window.REGISTRO_CURRENT_RELEASE || appLooksFunctional()) return true;
+      if (releaseEventSeen || appLooksFunctional()) return true;
       await sleep(100);
     }
     return appLooksFunctional();
@@ -377,7 +381,9 @@
     ta.style.position = 'fixed';
     ta.style.opacity = '0';
     document.body.appendChild(ta);
+    ta.focus();
     ta.select();
+    ta.setSelectionRange(0, ta.value.length);
     let ok = false;
     try { ok = document.execCommand('copy'); } catch (_) {}
     ta.remove();
@@ -462,10 +468,14 @@
       diagnostics.textContent = payload;
       diagnostics.setAttribute('tabindex','0');
     }
+    if (copyButton) {
+      copyButton.disabled = true;
+      copyButton.textContent = 'Copiando…';
+    }
     let ok = false;
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(payload);
+        await withTimeout(navigator.clipboard.writeText(payload), 1200, 'Cópia do diagnóstico');
         ok = true;
       }
     } catch (_) {}
@@ -480,6 +490,11 @@
         selection.addRange(range);
       } catch (_) {}
     }
+    setTimeout(() => {
+      if (!copyButton) return;
+      copyButton.disabled = false;
+      copyButton.textContent = 'Copiar diagnóstico';
+    }, 2400);
   });
 
   async function start() {
@@ -494,15 +509,22 @@
 
     currentStage = 'ambiente';
     const storagePromise = checkStorage();
-    const runtime = await clearObsoleteRuntime();
-    await Promise.allSettled([storagePromise]);
+    const cleanupPromise = clearObsoleteRuntime();
+    let runtime;
+    try {
+      runtime = await withTimeout(cleanupPromise, 1800, 'Limpeza do ambiente web');
+    } catch (error) {
+      runtime = { clean:false };
+      setStep('cache', 'warn', 'em segundo plano');
+      log('warn', 'Limpeza excedeu o limite e deixou de bloquear a abertura', error.message);
+    }
+    Promise.allSettled([storagePromise, cleanupPromise]).catch(() => {});
 
     if (hadControllerAtStart && runtime.clean && navigator.serviceWorker?.controller) {
       log('warn', 'Controlador residual do Safari ignorado', 'nenhuma inscrição ou cache antigo permanece ativo');
       setMessage('Abrindo com segurança', 'A versão antiga já foi removida; continuando nesta aba…');
     } else if (!runtime.clean) {
-      showFailure('Ainda existe runtime antigo ativo', 'Use Recuperar interface. Seus dados locais permanecem preservados.');
-      return;
+      log('warn', 'Runtime antigo não foi totalmente confirmado', 'continuando com arquivos de URL única');
     }
 
     try {

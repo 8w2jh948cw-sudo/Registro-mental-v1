@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.12');
+  const RELEASE = String(window.REGISTRO_SHELL_RELEASE || '1.2.0-beta.14');
   const STARTED = performance.now();
   const scopeToken = '/Registro-mental-v1/beta/';
   const hadControllerAtStart = Boolean(navigator.serviceWorker?.controller);
@@ -147,7 +147,7 @@
     };
     return Boolean(visible(shell) && visible(content) && visible(activeView) && visible(tabbar) && action);
   }
-  async function waitForFunctionalState(timeoutMs = 6500) { const started = performance.now(); while (performance.now() - started < timeoutMs) { if (releaseEventSeen || window.REGISTRO_CURRENT_RELEASE || appLooksFunctional()) return true; await sleep(100); } return appLooksFunctional(); }
+  async function waitForFunctionalState(timeoutMs = 6500) { const started = performance.now(); while (performance.now() - started < timeoutMs) { if (releaseEventSeen || appLooksFunctional()) return true; await sleep(100); } return appLooksFunctional(); }
 
   function showFailure(title, subtitle, error) {
     document.body.classList.add('rm-boot-failed'); setMessage(title, subtitle); setProgress(100);

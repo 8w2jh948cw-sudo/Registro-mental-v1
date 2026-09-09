@@ -19,60 +19,96 @@ jobs:
       - name: Baixar a versão publicada
         uses: actions/checkout@v4
 
-      - name: Validar arquivos, versões e identidade dos ambientes
+      - name: Validar arquivos, versões e isolamento dos dados
         run: |
           test -s index.html
           test -s app.js
+          test -s boot.js
+          test -s patches.js
           test -s menu.html
           test -s menu/index.html
           test -s diagnostico/index.html
           test -s beta/index.html
           test -s beta/app.js
+          test -s beta/boot.js
+          test -s beta/patches.js
           test -s beta/manifest.webmanifest
           python3 - <<'PY'
           import json
           from pathlib import Path
 
           environments = json.loads(Path('ambientes.json').read_text(encoding='utf-8'))
+          official = json.loads(Path('environment.json').read_text(encoding='utf-8'))
+          beta = json.loads(Path('beta/environment.json').read_text(encoding='utf-8'))
+          official_manifest = json.loads(Path('manifest.webmanifest').read_text(encoding='utf-8'))
           beta_manifest = json.loads(Path('beta/manifest.webmanifest').read_text(encoding='utf-8'))
-          assert environments['official']['release'] == '1.1.1'
-          assert environments['beta']['release'] == '1.2.0-beta.12'
+
+          assert environments['official']['release'] == '1.1.10'
+          assert environments['beta']['release'] == '1.2.0-beta.14'
+          assert official['release'] == '1.1.10'
+          assert beta['release'] == '1.2.0-beta.14'
+          assert beta['baseline_official'] == '1.1.10'
           assert environments['official']['database'] == 'registro-mental-v1'
           assert environments['beta']['database'] == 'registro-mental-beta-v1'
-          assert beta_manifest['id'] == './'
+          assert official_manifest['id'] == official_manifest['scope'] == './'
+          assert beta_manifest['id'] == beta_manifest['scope'] == './'
+          assert '1.1.10' in official_manifest['start_url']
+          assert '1.2.0-beta.14' in beta_manifest['start_url']
           PY
 
-      - name: Validar JavaScript e módulos incorporados
+      - name: Validar JavaScript, módulos incorporados e boot
         run: |
           find . -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           node <<'NODE'
           const fs = require('node:fs');
           const vm = require('node:vm');
-          for (const file of ['app.js', 'beta/app.js']) {
+
+          for (const [file, release, database] of [
+            ['app.js', '1.1.10', 'registro-mental-v1'],
+            ['beta/app.js', '1.2.0-beta.14', 'registro-mental-beta-v1']
+          ]) {
             const source = fs.readFileSync(file, 'utf8');
             const modules = [...source.matchAll(/s\.text=("(?:[^"\\]|\\.)*");document\.head\.appendChild/g)];
-            if (modules.length < 30) throw new Error(`${file}: apenas ${modules.length} módulos incorporados encontrados.`);
+            if (modules.length !== 34) throw new Error(`${file}: esperava 34 módulos; encontrou ${modules.length}.`);
             modules.forEach((match, index) => new vm.Script(JSON.parse(match[1]), { filename: `${file}#${index + 1}` }));
-            const releaseGlobals = [...source.matchAll(/\\nconst ([A-Za-z][A-Za-z0-9]*)=document\.getElementById\('topVersion'\)/g)].map(match => match[1]);
-            if (releaseGlobals.includes('top')) {
-              throw new Error(`${file}: declaração global incompatível com window.top.`);
+            if (!source.includes(`const VERSION = '${release}';`)) throw new Error(`${file}: release principal divergente.`);
+            if (!source.includes(`const DB_NAME='${database}'`)) throw new Error(`${file}: banco local divergente.`);
+            if (/\.src=['"]\.\/v04c(?:28|29|30|31|32|33|34|35)\.js/.test(source)) {
+              throw new Error(`${file}: ainda tenta baixar módulos que já estão incorporados.`);
             }
-            if (new Set(releaseGlobals).size !== releaseGlobals.length) {
-              throw new Error(`${file}: identificador global de versão repetido entre módulos.`);
+            if (!source.includes('while(!db&&attempts<200)')) throw new Error(`${file}: migração emocional não aguarda o banco local.`);
+            if (source.includes("'&quot'")) throw new Error(`${file}: escape HTML de aspas está incompleto.`);
+            const decoded = modules.map(match => JSON.parse(match[1]));
+            if (decoded.some(module => module.includes('delete record.hasAudio'))) {
+              throw new Error(`${file}: editar anotação voltou a apagar áudio existente.`);
             }
-            if (!source.includes('while(!db&&attempts<200)')) {
-              throw new Error(`${file}: migração emocional não aguarda o banco local.`);
+          }
+
+          const mood = fs.readFileSync('mood-bar-v2.js', 'utf8');
+          if (/new MutationObserver\([\s\S]{0,220}paintRelease\(\)/.test(mood)) {
+            throw new Error('mood-bar-v2.js: ciclo de MutationObserver voltou a ser possível.');
+          }
+          if (!mood.includes('if (stamp.textContent !== css)')) throw new Error('mood-bar-v2.js: pintura de release não é idempotente.');
+          if (/id=["']accentControl["']/.test(fs.readFileSync('index.html', 'utf8'))) {
+            throw new Error('index.html: seletor antigo de cor principal voltou à interface.');
+          }
+          if (!fs.readFileSync('official-appearance.js', 'utf8').includes("['accent','palette'")) {
+            throw new Error('official-appearance.js: preferências antigas de cor não são limpas.');
+          }
+
+          for (const file of ['boot.js', 'beta/boot.js']) {
+            const source = fs.readFileSync(file, 'utf8');
+            if (!source.includes("withTimeout(navigator.clipboard.writeText(payload), 1200")) {
+              throw new Error(`${file}: copiar diagnóstico pode bloquear indefinidamente.`);
             }
-            if (file === 'beta/app.js' && source.includes("const VERSION = '1.2.0';")) {
-              throw new Error(`${file}: motor Beta voltou a anunciar a versão estável.`);
-            }
+            if (!source.includes('appLooksFunctional()')) throw new Error(`${file}: boot não verifica a interface.`);
           }
           NODE
 
-      - name: Validar links internos e impedir endereços antigos
+      - name: Validar links e impedir resíduos conhecidos
         run: |
-          if rg -n '8w2jh948cw-sudo|Registro-mental-pwa' .; then
-            echo 'Foi encontrado um endereço antigo do projeto.' >&2
+          if rg -n '8w2jh948cw-sudo|Registro-mental-pwa|1\.2\.0-beta\.(12|13)|1\.1\.100' . --glob '!.github/**'; then
+            echo 'Foi encontrado um endereço ou release obsoleto.' >&2
             exit 1
           fi
           python3 - <<'PY'

@@ -1,4 +1,4 @@
-/* Registro Mental Oficial 1.1.9 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.1.10 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
@@ -39,7 +39,7 @@
       if (!raw) return;
       const settings = JSON.parse(raw);
       let changed = false;
-      ['palette','paleta','colorPalette','colourPalette','visualPalette','themePalette','semanticPalette'].forEach(key => {
+      ['accent','palette','paleta','colorPalette','colourPalette','visualPalette','themePalette','semanticPalette'].forEach(key => {
         if (Object.prototype.hasOwnProperty.call(settings, key)) {
           delete settings[key];
           changed = true;
@@ -55,6 +55,8 @@
 
   function applyColors() {
     const html = document.documentElement;
+    delete html.dataset.accent;
+    delete html.dataset.semanticPalette;
     html.style.setProperty('--accent', COLORS.accent, 'important');
     html.style.setProperty('--record-note', COLORS.note, 'important');
     html.style.setProperty('--record-med', COLORS.med, 'important');

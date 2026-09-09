@@ -37,7 +37,8 @@
       stamp.id = 'rm-mood-v2-release-stamp';
       document.head.appendChild(stamp);
     }
-    stamp.textContent = `#topVersion::after{content:"v${RELEASE}"!important}#versionLabel::after{content:"${RELEASE}"!important}`;
+    const css = `#topVersion::after{content:"v${RELEASE}"!important}#versionLabel::after{content:"${RELEASE}"!important}`;
+    if (stamp.textContent !== css) stamp.textContent = css;
   }
 
   function installStyles() {
@@ -211,7 +212,6 @@
     if (observer) return;
     observer = new MutationObserver(mutations => {
       if (mutations.some(m => m.addedNodes?.length)) scheduleDecorate(false);
-      paintRelease();
     });
     observer.observe(document.documentElement, { childList:true, subtree:true });
     document.addEventListener('click', event => {
