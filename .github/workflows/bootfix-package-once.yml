@@ -1,3 +1,4 @@
+# execução única disparada em 2026-09-09
 name: Corrigir boot e empacotar PWA
 
 on:
@@ -29,40 +30,24 @@ jobs:
                   raise SystemExit(f'Padrão não encontrado: {label}')
               return text.replace(old, new, 1)
 
-          # ---------- Oficial: index ----------
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           hidden_css = '#rmBootActions[hidden],#rmBootDiagnostics[hidden]{display:none!important}'
           if hidden_css not in s:
-              s = replace_once(
-                  s,
-                  '#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}',
-                  '#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}\n  ' + hidden_css,
-                  'CSS hidden oficial'
-              )
-          s = re.sub(r'<script src="\./boot\.js\?v=[^"]+" defer></script>',
-                     '<script src="./boot.js?v=1.1.10-bootfix2" defer></script>', s, count=1)
-          p.write_text(s, encoding='utf-8')
+              s = replace_once(s,'#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}','#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}\n  '+hidden_css,'CSS hidden oficial')
+          s = re.sub(r'<script src="\./boot\.js\?v=[^"]+" defer></script>','<script src="./boot.js?v=1.1.10-bootfix2" defer></script>',s,count=1)
+          p.write_text(s,encoding='utf-8')
 
-          # ---------- Beta: index ----------
           p = Path('beta/index.html')
           s = p.read_text(encoding='utf-8')
           if hidden_css not in s:
-              s = replace_once(
-                  s,
-                  '#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}',
-                  '#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}\n  ' + hidden_css,
-                  'CSS hidden beta'
-              )
-          s = re.sub(r'<script src="\./boot\.js\?v=[^"]+" defer></script>',
-                     '<script src="./boot.js?v=1.2.0-beta.14-bootfix2" defer></script>', s, count=1)
-          p.write_text(s, encoding='utf-8')
+              s = replace_once(s,'#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}','#rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}\n  '+hidden_css,'CSS hidden beta')
+          s = re.sub(r'<script src="\./boot\.js\?v=[^"]+" defer></script>','<script src="./boot.js?v=1.2.0-beta.14-bootfix2" defer></script>',s,count=1)
+          p.write_text(s,encoding='utf-8')
 
-          # ---------- Oficial: boot ----------
           p = Path('boot.js')
           s = p.read_text(encoding='utf-8')
-          s = s.replace("const RELEASE = '1.1.8';", "const RELEASE = '1.1.10';", 1)
-
+          s = s.replace("const RELEASE = '1.1.8';","const RELEASE = '1.1.10';",1)
           old_func = """  function appLooksFunctional() {
     const shell = document.querySelector('.app-shell');
     const tabbar = document.querySelector('.tab-bar');
@@ -89,42 +74,22 @@ jobs:
     return Boolean(visible(shell) && visible(content) && visible(activeView) && visible(tabbar) && action);
   }
 """
-          s = replace_once(s, old_func, new_func, 'appLooksFunctional oficial')
-
-          pattern = re.compile(r"  copyButton\?\.addEventListener\('click', async \(\) => \{.*?\n  \}\);", re.S)
+          s = replace_once(s,old_func,new_func,'appLooksFunctional oficial')
+          pattern = re.compile(r"  copyButton\?\.addEventListener\('click', async \(\) => \{.*?\n  \}\);",re.S)
           replacement = """  copyButton?.addEventListener('click', async () => {
     const payload = lastDiagnosticPayload || buildDiagnostic('Diagnóstico solicitado manualmente');
     persistDiagnostic(payload);
-    if (diagnostics) {
-      diagnostics.hidden = false;
-      diagnostics.textContent = payload;
-      diagnostics.setAttribute('tabindex','0');
-    }
+    if (diagnostics) { diagnostics.hidden = false; diagnostics.textContent = payload; diagnostics.setAttribute('tabindex','0'); }
     let ok = false;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(payload);
-        ok = true;
-      }
-    } catch (_) {}
+    try { if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(payload); ok = true; } } catch (_) {}
     if (!ok) ok = fallbackCopy(payload);
     if (copyButton) copyButton.textContent = ok ? 'Diagnóstico copiado' : 'Texto exibido abaixo';
-    if (!ok && diagnostics) {
-      try {
-        const range = document.createRange();
-        range.selectNodeContents(diagnostics);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-      } catch (_) {}
-    }
+    if (!ok && diagnostics) { try { const range=document.createRange(); range.selectNodeContents(diagnostics); const selection=window.getSelection(); selection.removeAllRanges(); selection.addRange(range); } catch (_) {} }
   });"""
-          s, n = pattern.subn(replacement, s, count=1)
-          if n != 1:
-              raise SystemExit('Handler copiar diagnóstico oficial não encontrado')
-          p.write_text(s, encoding='utf-8')
+          s,n = pattern.subn(replacement,s,count=1)
+          if n != 1: raise SystemExit('Handler copiar diagnóstico oficial não encontrado')
+          p.write_text(s,encoding='utf-8')
 
-          # ---------- Beta: boot ----------
           p = Path('beta/boot.js')
           s = p.read_text(encoding='utf-8')
           old_func_beta = """  function appLooksFunctional() {
@@ -151,51 +116,27 @@ jobs:
     return Boolean(visible(shell) && visible(content) && visible(activeView) && visible(tabbar) && action);
   }
 """
-          s = replace_once(s, old_func_beta, new_func_beta, 'appLooksFunctional beta')
-
-          pattern_beta = re.compile(r"  copyButton\?\.addEventListener\('click', async \(\) => \{.*?\n  \}\);", re.S)
+          s = replace_once(s,old_func_beta,new_func_beta,'appLooksFunctional beta')
+          pattern_beta = re.compile(r"  copyButton\?\.addEventListener\('click', async \(\) => \{.*?\n  \}\);",re.S)
           replacement_beta = """  copyButton?.addEventListener('click', async () => {
     const payload = [`Registro Mental ${RELEASE}`, `URL: ${location.href}`, `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`, `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`, `Controlador residual agora: ${navigator.serviceWorker?.controller ? 'sim' : 'não'}`, `Online: ${navigator.onLine ? 'sim' : 'não'}`, `User agent: ${navigator.userAgent}`, '', ...window.__RM_BOOT_DIAGNOSTICS.map(item => `${item.t}ms ${item.kind}: ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)].join('\\n');
-    if (diagnostics) {
-      diagnostics.hidden = false;
-      diagnostics.textContent = payload;
-      diagnostics.setAttribute('tabindex','0');
-    }
-    copyButton.disabled = true;
-    copyButton.textContent = 'Copiando…';
+    if (diagnostics) { diagnostics.hidden = false; diagnostics.textContent = payload; diagnostics.setAttribute('tabindex','0'); }
+    copyButton.disabled = true; copyButton.textContent = 'Copiando…';
     let copied = false;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await withTimeout(navigator.clipboard.writeText(payload), 1200, 'Cópia do diagnóstico');
-        copied = true;
-      }
-    } catch (_) {}
+    try { if (navigator.clipboard?.writeText) { await withTimeout(navigator.clipboard.writeText(payload),1200,'Cópia do diagnóstico'); copied = true; } } catch (_) {}
     if (!copied) copied = copyTextLegacy(payload);
     copyButton.textContent = copied ? 'Diagnóstico copiado' : 'Texto exibido abaixo';
-    if (!copied && diagnostics) {
-      try {
-        const range = document.createRange();
-        range.selectNodeContents(diagnostics);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-      } catch (_) {}
-    }
-    setTimeout(() => {
-      copyButton.disabled = false;
-      copyButton.textContent = 'Copiar diagnóstico';
-    }, 2400);
+    if (!copied && diagnostics) { try { const range=document.createRange(); range.selectNodeContents(diagnostics); const selection=window.getSelection(); selection.removeAllRanges(); selection.addRange(range); } catch (_) {} }
+    setTimeout(()=>{ copyButton.disabled=false; copyButton.textContent='Copiar diagnóstico'; },2400);
   });"""
-          s, n = pattern_beta.subn(replacement_beta, s, count=1)
-          if n != 1:
-              raise SystemExit('Handler copiar diagnóstico beta não encontrado')
-          p.write_text(s, encoding='utf-8')
+          s,n = pattern_beta.subn(replacement_beta,s,count=1)
+          if n != 1: raise SystemExit('Handler copiar diagnóstico beta não encontrado')
+          p.write_text(s,encoding='utf-8')
 
-          # ---------- Versão visível oficial ----------
           p = Path('official-appearance.js')
           s = p.read_text(encoding='utf-8')
-          s = s.replace("const RELEASE = '1.1.9';", "const RELEASE = '1.1.10';", 1)
-          p.write_text(s, encoding='utf-8')
+          s = s.replace("const RELEASE = '1.1.9';","const RELEASE = '1.1.10';",1)
+          p.write_text(s,encoding='utf-8')
           PY
 
       - name: Commitar correções
@@ -213,9 +154,7 @@ jobs:
         shell: bash
         run: |
           rm -f Registro-Mental-PWA-1.1.10.zip
-          zip -r Registro-Mental-PWA-1.1.10.zip . \
-            -x '.git/*' \
-            -x 'Registro-Mental-PWA-1.1.10.zip'
+          zip -r Registro-Mental-PWA-1.1.10.zip . -x '.git/*' -x 'Registro-Mental-PWA-1.1.10.zip'
 
       - name: Publicar ZIP como artefato
         uses: actions/upload-artifact@v4
