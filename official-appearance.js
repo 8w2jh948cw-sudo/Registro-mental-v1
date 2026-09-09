@@ -211,3 +211,18 @@
 
   window.REGISTRO_OFFICIAL_APPEARANCE_READY = true;
 })();
+
+/* Integração aditiva da barra emocional aprovada. Falha deste módulo nunca bloqueia a Oficial. */
+(() => {
+  try {
+    if (document.querySelector('script[data-rm-mood-v2]')) return;
+    const script = document.createElement('script');
+    script.dataset.rmMoodV2 = '1';
+    script.src = `./mood-bar-v2.js?v=1.1.10&load=${Date.now()}`;
+    script.async = true;
+    script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
+    document.head.appendChild(script);
+  } catch (error) {
+    console.warn('Registro Oficial: integração emocional não bloqueante', error);
+  }
+})();
