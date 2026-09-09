@@ -131,9 +131,21 @@
   }
 
   function appLooksFunctional() {
-    const shell = document.querySelector('.app-shell'), tabbar = document.querySelector('.tab-bar'), action = document.querySelector('.action-card');
-    const hasCoreFunctions = typeof window.renderAll === 'function' || typeof window.openDB === 'function';
-    return Boolean(shell && tabbar && action && hasCoreFunctions);
+    const shell = document.querySelector('.app-shell');
+    const content = document.getElementById('content') || document.querySelector('.content');
+    const activeView = document.querySelector('.view.active');
+    const tabbar = document.querySelector('.tab-bar,.capsule-tabbar');
+    const action = document.querySelector('.action-card');
+    const visible = node => {
+      if (!node) return false;
+      try {
+        const st = getComputedStyle(node);
+        const r = node.getBoundingClientRect();
+        const opacity = Number.parseFloat(st.opacity || '1');
+        return st.display !== 'none' && st.visibility !== 'hidden' && !(Number.isFinite(opacity) && opacity <= .01) && r.width > 40 && r.height > 24;
+      } catch (_) { return true; }
+    };
+    return Boolean(visible(shell) && visible(content) && visible(activeView) && visible(tabbar) && action);
   }
   async function waitForFunctionalState(timeoutMs = 6500) { const started = performance.now(); while (performance.now() - started < timeoutMs) { if (releaseEventSeen || window.REGISTRO_CURRENT_RELEASE || appLooksFunctional()) return true; await sleep(100); } return appLooksFunctional(); }
 
@@ -157,7 +169,13 @@
   safeButton?.addEventListener('click', () => { location.href = `./safe.html?v=${encodeURIComponent(RELEASE)}&safe=${Date.now()}`; });
   recoverButton?.addEventListener('click', () => { location.href = `./recover.html?v=${encodeURIComponent(RELEASE)}&from=boot&recover=${Date.now()}`; });
   copyButton?.addEventListener('click', async () => {
-    const payload = [`Registro Mental ${RELEASE}`, `URL: ${location.href}`, `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`, `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`, `Controlador residual agora: ${navigator.serviceWorker?.controller ? 'sim' : 'não'}`, `Online: ${navigator.onLine ? 'sim' : 'não'}`, `User agent: ${navigator.userAgent}`, '', ...window.__RM_BOOT_DIAGNOSTICS.map(item => `${item.t}ms ${item.kind}: ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)].join('\n');
+    const payload = [`Registro Mental ${RELEASE}`, `URL: ${location.href}`, `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`, `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`, `Controlador residual agora: ${navigator.serviceWorker?.controller ? 'sim' : 'não'}`, `Online: ${navigator.onLine ? 'sim' : 'não'}`, `User agent: ${navigator.userAgent}`, '', ...window.__RM_BOOT_DIAGNOSTICS.map(item => `${item.t}ms ${item.kind}: ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)].join('
+');
+    if (diagnostics) {
+      diagnostics.hidden = false;
+      diagnostics.textContent = payload;
+      diagnostics.setAttribute('tabindex','0');
+    }
     copyButton.disabled = true;
     copyButton.textContent = 'Copiando…';
     let copied = false;
@@ -168,11 +186,15 @@
       }
     } catch (_) {}
     if (!copied) copied = copyTextLegacy(payload);
-    if (copied) {
-      copyButton.textContent = 'Diagnóstico copiado';
-    } else {
-      if (diagnostics) { diagnostics.hidden = false; diagnostics.textContent = payload; }
-      copyButton.textContent = 'Diagnóstico exibido abaixo';
+    copyButton.textContent = copied ? 'Diagnóstico copiado' : 'Texto exibido abaixo';
+    if (!copied && diagnostics) {
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(diagnostics);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } catch (_) {}
     }
     setTimeout(() => {
       copyButton.disabled = false;

@@ -20,6 +20,7 @@
   body.rm-booting{overflow:hidden}
   #rmBoot{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:22px;background:#f5f5f7;color:#111114;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;box-sizing:border-box;transition:opacity .22s ease,visibility .22s ease}
   #rmBoot.rm-boot-hide{opacity:0;visibility:hidden;pointer-events:none}
+  #rmBootActions[hidden],#rmBootDiagnostics[hidden]{display:none!important}
   .rm-boot-card{width:min(100%,390px);background:#fff;border-radius:24px;padding:22px;box-sizing:border-box;box-shadow:0 12px 38px rgba(0,0,0,.07)}
   .rm-boot-top{display:flex;align-items:center;gap:13px;margin-bottom:16px}.rm-boot-mark{width:48px;height:48px;border-radius:15px;background:#f0ecff;color:#6f4cff;display:grid;place-items:center;font-size:25px;font-weight:700;flex:none}
   .rm-boot-copy h1{font-size:22px;line-height:1.15;margin:0 0 4px}.rm-boot-copy p{font-size:13px;line-height:1.4;color:#77777c;margin:0}
@@ -206,7 +207,7 @@ setTimeout(function(){
 },8000);
 </script>
 
-<script src="./boot.js?v=1.2.0-beta.13" defer></script>
+<script src="./boot.js?v=1.2.0-beta.14-bootfix2" defer></script>
 <script src="./beta-tools.js?v=1.2.0-beta.13" defer></script>
 <script src="./beta-patches.js?v=1.2.0-beta.13" defer></script>
 <script src="./appearance-editor.js?v=1.2.0-beta.13" defer></script>

@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = '1.1.9';
+  const RELEASE = '1.1.10';
   const SETTINGS_KEY = 'registro-settings-v2';
   const COLORS = {
     accent: '#7259D6',

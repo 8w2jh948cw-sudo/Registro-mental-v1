@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = '1.1.8';
+  const RELEASE = '1.1.10';
   const STARTED = performance.now();
   const scopeToken = '/Registro-mental-v1/';
   const DIAG_KEY = 'registro-last-diagnostic-v1';
@@ -331,10 +331,20 @@
 
   function appLooksFunctional() {
     const shell = document.querySelector('.app-shell');
-    const tabbar = document.querySelector('.tab-bar');
+    const content = document.getElementById('content') || document.querySelector('.content');
+    const activeView = document.querySelector('.view.active');
+    const tabbar = document.querySelector('.tab-bar,.capsule-tabbar');
     const action = document.querySelector('.action-card');
-    const hasCoreFunctions = typeof window.renderAll === 'function' || typeof window.openDB === 'function';
-    return Boolean(shell && tabbar && action && hasCoreFunctions);
+    const visible = node => {
+      if (!node) return false;
+      try {
+        const st = getComputedStyle(node);
+        const r = node.getBoundingClientRect();
+        const opacity = Number.parseFloat(st.opacity || '1');
+        return st.display !== 'none' && st.visibility !== 'hidden' && !(Number.isFinite(opacity) && opacity <= .01) && r.width > 40 && r.height > 24;
+      } catch (_) { return true; }
+    };
+    return Boolean(visible(shell) && visible(content) && visible(activeView) && visible(tabbar) && action);
   }
 
   async function waitForFunctionalState(timeoutMs = 6500) {
@@ -447,10 +457,29 @@
   copyButton?.addEventListener('click', async () => {
     const payload = lastDiagnosticPayload || buildDiagnostic('Diagnóstico solicitado manualmente');
     persistDiagnostic(payload);
+    if (diagnostics) {
+      diagnostics.hidden = false;
+      diagnostics.textContent = payload;
+      diagnostics.setAttribute('tabindex','0');
+    }
     let ok = false;
-    try { await navigator.clipboard.writeText(payload); ok = true; } catch (_) { ok = fallbackCopy(payload); }
-    if (copyButton) copyButton.textContent = ok ? 'Diagnóstico copiado' : 'Copie o texto abaixo';
-    if (!ok && diagnostics) { diagnostics.hidden = false; diagnostics.textContent = payload; }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+        ok = true;
+      }
+    } catch (_) {}
+    if (!ok) ok = fallbackCopy(payload);
+    if (copyButton) copyButton.textContent = ok ? 'Diagnóstico copiado' : 'Texto exibido abaixo';
+    if (!ok && diagnostics) {
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(diagnostics);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } catch (_) {}
+    }
   });
 
   async function start() {
