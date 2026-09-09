@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.1.8 — aparência segura e paleta personalizada fixa. */
+/* Registro Mental Oficial 1.1.9 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.1.8';
+  const RELEASE = '1.1.9';
   const SETTINGS_KEY = 'registro-settings-v2';
   const COLORS = {
     accent: '#7259D6',
@@ -111,6 +111,10 @@
       #historyFilters.filter-scroll{overflow-x:auto!important;overflow-y:visible!important;padding-top:8px!important;padding-bottom:10px!important;margin-top:-8px!important;margin-bottom:-10px!important;scroll-padding-inline:4px}
       #historyFilters .filter-chip{position:relative!important}
 
+      #homeTimeline .timeline-item{grid-template-columns:68px minmax(0,1fr) 28px}
+      #homeTimeline .rm-home-recent-day{display:block;color:var(--secondary);font-size:10px;font-weight:750;line-height:1.15;white-space:nowrap}
+      #homeTimeline .rm-home-recent-hour{display:block;margin-top:3px;color:var(--secondary);font-size:11px;line-height:1.15;font-variant-numeric:tabular-nums}
+
       /* Nunca esconder html/body por atributos de aparência. */
       #accentControl,.accent-options,#semanticPaletteControl,
       button[data-accent],button[data-semantic-palette],
@@ -119,11 +123,80 @@
     `;
   }
 
+  function localDayKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function compactRecentDay(timestamp) {
+    const date = new Date(timestamp);
+    if (!Number.isFinite(date.getTime())) return '';
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const key = localDayKey(date);
+    if (key === localDayKey(today)) return 'Hoje';
+    if (key === localDayKey(yesterday)) return 'Ontem';
+    return date.toLocaleDateString('pt-BR', { day:'2-digit', month:'short' }).replace('.', '');
+  }
+
+  async function renderLastSix(events) {
+    const box = document.getElementById('homeTimeline');
+    if (!box || typeof window.eventCard !== 'function') return;
+
+    const recent = (Array.isArray(events) ? events : [])
+      .slice()
+      .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0,6);
+
+    box.innerHTML = recent.map(event => window.eventCard(event)).join('');
+    const cards = [...box.querySelectorAll('.timeline-item')];
+    cards.forEach((card,index) => {
+      const event = recent[index];
+      const time = card.querySelector('.timeline-time');
+      if (!event || !time) return;
+      const date = new Date(event.timestamp);
+      const hour = Number.isFinite(date.getTime())
+        ? date.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })
+        : '';
+      time.innerHTML = `<span class="rm-home-recent-day">${compactRecentDay(event.timestamp)}</span><span class="rm-home-recent-hour">${hour}</span>`;
+    });
+
+    const empty = document.getElementById('homeEmpty');
+    if (empty) {
+      empty.textContent = 'Nenhum registro ainda.';
+      empty.classList.toggle('hidden', recent.length > 0);
+    }
+
+    if (typeof window.hydrateAudio === 'function') await window.hydrateAudio(box);
+  }
+
+  function installRecentSixBehavior() {
+    const current = window.renderHome;
+    if (typeof current !== 'function' || current.__rmRecentSix === true) return;
+
+    const wrapped = async function(events) {
+      await current.apply(this, arguments);
+      try { await renderLastSix(events); }
+      catch (error) { console.warn('Registro Oficial: últimos registros não bloquearam a tela', error); }
+    };
+    wrapped.__rmRecentSix = true;
+    wrapped.__rmRecentSixBase = current;
+    window.renderHome = wrapped;
+
+    if (typeof window.allEvents === 'function') {
+      Promise.resolve(window.allEvents()).then(renderLastSix).catch(() => {});
+    }
+  }
+
   function applyAll() {
     paintRelease();
     normalizeSettings();
     installStyles();
     applyColors();
+    installRecentSixBehavior();
   }
 
   try { applyAll(); } catch (error) { console.warn('Registro Oficial: aparência não bloqueante', error); }
