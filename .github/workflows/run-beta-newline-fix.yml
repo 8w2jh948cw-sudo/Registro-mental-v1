@@ -1,0 +1,54 @@
+name: Validar boot e empacotar PWA corrigido
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'trigger-beta-newline-fix.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-validate-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Corrigir quebra de linha do diagnóstico Beta
+        run: python3 tools/fix-beta-boot-newline.py
+
+      - name: Validar JavaScript crítico
+        run: |
+          node --check boot.js
+          node --check beta/boot.js
+          node --check mood-bar-v2.js
+          node --check official-appearance.js
+          node --check beta/patches.js
+
+      - name: Commitar correção se necessária
+        run: |
+          git config user.name "Vinicius"
+          git config user.email "viniciusnevez123@gmail.com"
+          git add beta/boot.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Corrige string do diagnóstico no boot Beta"
+            git push origin main
+          fi
+
+      - name: Criar ZIP validado
+        run: |
+          rm -f Registro-Mental-PWA-1.1.10-validado.zip
+          zip -r Registro-Mental-PWA-1.1.10-validado.zip . \
+            -x '.git/*' \
+            -x 'Registro-Mental-PWA-1.1.10-validado.zip'
+
+      - name: Publicar ZIP validado
+        uses: actions/upload-artifact@v4
+        with:
+          name: Registro-Mental-PWA-1.1.10-validado
+          path: Registro-Mental-PWA-1.1.10-validado.zip
+          if-no-files-found: error
+          retention-days: 30
