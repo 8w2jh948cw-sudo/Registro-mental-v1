@@ -211,6 +211,13 @@
       await loadScript('./patches.js', 8000); setStep('patches', 'ok', 'aplicadas'); log('ok', 'Correções finais carregadas');
     } catch (error) { setStep('patches', 'warn', 'parcial'); log('warn', 'Correções finais não carregaram', error?.message || error); }
 
+    try {
+      await loadScript('../mood-bar-v2.js', 8000);
+      log('ok', 'Barra emocional 0–10 carregada sem substituir patches estáveis');
+    } catch (error) {
+      log('warn', 'Barra emocional 0–10 não carregou; Beta estável mantida', error?.message || error);
+    }
+
     setStep('ready', 'active', 'verificando'); setProgress(86); setMessage('Quase pronto', 'Verificando se a interface respondeu…');
     const functional = await waitForFunctionalState();
     if (!functional) { showFailure('A interface não respondeu', 'Os arquivos carregaram, mas o app não confirmou funcionamento. Seus dados não foram apagados.', lastFatal ? new Error(lastFatal.message) : null); return; }
