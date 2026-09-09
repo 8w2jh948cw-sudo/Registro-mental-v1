@@ -169,8 +169,7 @@
   safeButton?.addEventListener('click', () => { location.href = `./safe.html?v=${encodeURIComponent(RELEASE)}&safe=${Date.now()}`; });
   recoverButton?.addEventListener('click', () => { location.href = `./recover.html?v=${encodeURIComponent(RELEASE)}&from=boot&recover=${Date.now()}`; });
   copyButton?.addEventListener('click', async () => {
-    const payload = [`Registro Mental ${RELEASE}`, `URL: ${location.href}`, `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`, `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`, `Controlador residual agora: ${navigator.serviceWorker?.controller ? 'sim' : 'não'}`, `Online: ${navigator.onLine ? 'sim' : 'não'}`, `User agent: ${navigator.userAgent}`, '', ...window.__RM_BOOT_DIAGNOSTICS.map(item => `${item.t}ms ${item.kind}: ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)].join('
-');
+    const payload = [`Registro Mental ${RELEASE}`, `URL: ${location.href}`, `Standalone: ${window.matchMedia?.('(display-mode: standalone)')?.matches ? 'sim' : 'não'}`, `Controlado por Service Worker ao abrir: ${hadControllerAtStart ? 'sim' : 'não'}`, `Controlador residual agora: ${navigator.serviceWorker?.controller ? 'sim' : 'não'}`, `Online: ${navigator.onLine ? 'sim' : 'não'}`, `User agent: ${navigator.userAgent}`, '', ...window.__RM_BOOT_DIAGNOSTICS.map(item => `${item.t}ms ${item.kind}: ${item.message}${item.extra ? ` — ${item.extra}` : ''}`)].join('\n');
     if (diagnostics) {
       diagnostics.hidden = false;
       diagnostics.textContent = payload;
