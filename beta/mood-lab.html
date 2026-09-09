@@ -7,34 +7,596 @@
 <meta name="theme-color" content="#f5f5f7">
 <title>Laboratório — Escala de humor</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f5f7;--surface:#fff;--text:#111114;--secondary:#6e6e73;--separator:rgba(60,60,67,.14);--accent:#7259D6;--track:rgba(255,255,255,.86);--shadow:0 10px 30px rgba(0,0,0,.10);--selected:#34A853}
-@media(prefers-color-scheme:dark){:root{--bg:#111114;--surface:#1c1c1e;--text:#f5f5f7;--secondary:#a1a1a6;--separator:rgba(235,235,245,.15);--track:rgba(44,44,46,.90);--shadow:0 10px 30px rgba(0,0,0,.28)}}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}body{padding:calc(24px + env(safe-area-inset-top)) 18px calc(36px + env(safe-area-inset-bottom))}main{width:min(100%,560px);margin:auto}.eyebrow{margin:0 0 5px;color:var(--secondary);font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}h1{font-size:29px;letter-spacing:-.03em;margin:0}.intro{color:var(--secondary);font-size:14px;line-height:1.5;margin:9px 0 28px}.card{padding:20px 16px 18px;border:1px solid var(--separator);border-radius:24px;background:var(--surface);box-shadow:0 5px 18px rgba(0,0,0,.035)}.label{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:16px}.label strong{font-size:17px}.label span{color:var(--secondary);font-size:12px}.scale-wrap{display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;align-items:center}.zero,.scale button{appearance:none;border:0;font:750 12px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}.zero{width:38px;height:38px;border-radius:50%;background:var(--track);color:var(--secondary);border:1px solid var(--separator);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%);transition:.18s transform,.18s background,.18s color,.18s box-shadow}.scale{position:relative;height:38px;border:1px solid var(--separator);border-radius:999px;background:var(--track);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%);overflow:hidden}.fill{position:absolute;z-index:1;inset:0 auto 0 0;width:0%;border-radius:999px;background:var(--selected);opacity:.95;transition:width .24s cubic-bezier(.2,.8,.2,1),background .18s ease}.scale-grid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));height:100%}.scale button{min-width:0;padding:0;background:transparent;color:var(--secondary);border-radius:999px;transition:.18s color,.18s transform}.scale button.filled{color:rgba(255,255,255,.92)}.scale button.selected{color:#fff;transform:scale(1.08);text-shadow:0 1px 3px rgba(0,0,0,.28)}.zero.selected{background:var(--selected);color:#fff;transform:scale(1.06);box-shadow:0 0 0 2px color-mix(in srgb,var(--selected) 28%,transparent),var(--shadow)}.result{margin:20px 2px 0;min-height:45px}.result strong{display:block;font-size:15px}.result small{display:block;color:var(--secondary);margin-top:4px;line-height:1.35}.note{margin:18px 3px 0;color:var(--secondary);font-size:12px;line-height:1.45}.back{display:inline-block;margin-top:25px;color:var(--accent);font-size:13px;font-weight:700;text-decoration:none}@media(max-width:430px){body{padding-left:12px;padding-right:12px}.card{padding-left:11px;padding-right:11px}.scale-wrap{grid-template-columns:34px minmax(0,1fr);gap:6px}.zero{width:34px;height:34px}.scale{height:34px}.zero,.scale button{font-size:11px}}@media(max-width:350px){.scale-wrap{grid-template-columns:32px minmax(0,1fr);gap:5px}.zero{width:32px;height:32px}.scale{height:32px}.zero,.scale button{font-size:10px}}
+:root{
+  color-scheme:light dark;
+  --bg:#f5f5f7;
+  --surface:#ffffff;
+  --surface-2:#fbfbfd;
+  --text:#111114;
+  --secondary:#6e6e73;
+  --separator:rgba(60,60,67,.14);
+  --track:rgba(255,255,255,.88);
+  --shadow:0 12px 30px rgba(0,0,0,.09);
+  --soft-shadow:0 4px 14px rgba(0,0,0,.05);
+  --fill:#57D65A;
+  --fill-soft:rgba(87,214,90,.16);
+  --selected-text:#ffffff;
+  --unfilled-text:#6e6e73;
+  --accent:#7259D6;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#111114;
+    --surface:#1c1c1e;
+    --surface-2:#232326;
+    --text:#f5f5f7;
+    --secondary:#a1a1a6;
+    --separator:rgba(235,235,245,.14);
+    --track:rgba(44,44,46,.92);
+    --shadow:0 12px 28px rgba(0,0,0,.28);
+    --soft-shadow:0 4px 14px rgba(0,0,0,.18);
+    --selected-text:#ffffff;
+    --unfilled-text:#a1a1a6;
+  }
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+}
+body{
+  padding:calc(26px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));
+}
+main{
+  width:min(100%,700px);
+  margin:auto;
+}
+.eyebrow{
+  margin:0 0 6px;
+  color:var(--secondary);
+  font-size:11px;
+  font-weight:760;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+h1{
+  margin:0;
+  font-size:30px;
+  line-height:1.06;
+  letter-spacing:-.03em;
+}
+.intro{
+  margin:10px 0 24px;
+  color:var(--secondary);
+  font-size:14px;
+  line-height:1.5;
+}
+.stack{
+  display:grid;
+  gap:18px;
+}
+.panel{
+  border:1px solid var(--separator);
+  background:var(--surface);
+  border-radius:26px;
+  padding:18px 16px;
+  box-shadow:var(--soft-shadow);
+}
+.panel h2{
+  margin:0;
+  font-size:18px;
+  line-height:1.15;
+}
+.panel p.sub{
+  margin:5px 0 0;
+  color:var(--secondary);
+  font-size:12px;
+  line-height:1.45;
+}
+.scale-wrap{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr);
+  gap:8px;
+  align-items:center;
+}
+.zero, .scale button{
+  appearance:none;
+  border:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  font:800 12px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+}
+.zero{
+  width:40px;
+  height:40px;
+  border-radius:999px;
+  background:var(--track);
+  color:var(--unfilled-text);
+  border:1px solid var(--separator);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(24px) saturate(145%);
+  -webkit-backdrop-filter:blur(24px) saturate(145%);
+  transition:transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
+}
+.scale{
+  position:relative;
+  height:40px;
+  border-radius:999px;
+  background:var(--track);
+  border:1px solid var(--separator);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(24px) saturate(145%);
+  -webkit-backdrop-filter:blur(24px) saturate(145%);
+}
+.fill{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:0%;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 45%),
+    linear-gradient(90deg, var(--fill), var(--fill));
+  border-radius:999px;
+  transition:width .28s cubic-bezier(.2,.8,.2,1), background .22s ease, box-shadow .22s ease;
+  box-shadow:0 0 18px color-mix(in srgb, var(--fill) 36%, transparent) inset;
+}
+.scale-grid{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  height:100%;
+}
+.scale button{
+  min-width:0;
+  background:transparent;
+  color:var(--unfilled-text);
+  transition:transform .18s ease, color .18s ease, text-shadow .18s ease;
+}
+.scale button.filled{
+  color:rgba(255,255,255,.93);
+}
+.scale button.selected{
+  color:var(--selected-text);
+  transform:scale(1.08);
+  text-shadow:0 1px 3px rgba(0,0,0,.22);
+}
+.zero.selected{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 45%),
+    linear-gradient(90deg, var(--fill), var(--fill));
+  color:#fff;
+  transform:scale(1.05);
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--fill) 28%, transparent), var(--shadow);
+}
+.selection-summary{
+  margin-top:16px;
+  min-height:44px;
+}
+.selection-summary strong{
+  display:block;
+  font-size:16px;
+}
+.selection-summary small{
+  display:block;
+  margin-top:4px;
+  color:var(--secondary);
+  font-size:12px;
+  line-height:1.45;
+}
+.palette-row{
+  display:grid;
+  grid-template-columns:repeat(11,minmax(0,1fr));
+  gap:6px;
+  margin-top:16px;
+}
+.swatch{
+  min-width:0;
+  display:grid;
+  gap:5px;
+  justify-items:center;
+}
+.swatch i{
+  display:block;
+  width:100%;
+  aspect-ratio:1/1;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:var(--soft-shadow);
+}
+.swatch span{
+  color:var(--secondary);
+  font-size:10px;
+  font-weight:700;
+}
+.preview-card{
+  margin-top:16px;
+  border:1px solid var(--separator);
+  border-radius:24px;
+  background:var(--surface-2);
+  overflow:hidden;
+}
+.preview-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 16px 12px;
+}
+.preview-title small{
+  display:block;
+  color:var(--secondary);
+  font-size:11px;
+  font-weight:760;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.preview-title strong{
+  display:block;
+  font-size:18px;
+  line-height:1.15;
+}
+.mood-chip{
+  min-width:120px;
+  padding:9px 10px;
+  border-radius:16px;
+  border:1px solid color-mix(in srgb, var(--fill) 30%, var(--separator));
+  background:color-mix(in srgb, var(--fill) 12%, var(--surface));
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset;
+}
+.mood-chip-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:7px;
+}
+.mood-chip-top strong{
+  font-size:12px;
+}
+.mood-chip-top span{
+  font-size:18px;
+  font-weight:830;
+  color:var(--fill);
+  line-height:1;
+}
+.mood-mini{
+  position:relative;
+  height:7px;
+  border-radius:999px;
+  background:rgba(127,127,127,.16);
+  overflow:hidden;
+}
+.mood-mini-fill{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:0%;
+  border-radius:999px;
+  background:var(--fill);
+  transition:width .28s cubic-bezier(.2,.8,.2,1), background .22s ease;
+}
+.preview-body{
+  padding:0 16px 16px;
+}
+.meta{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  color:var(--secondary);
+  font-size:12px;
+  margin-bottom:10px;
+}
+.dot{
+  width:4px;height:4px;border-radius:50%;background:var(--secondary);opacity:.6;
+}
+.kind-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(1,136,254,.12);
+  color:#0188FE;
+  font-size:11px;
+  font-weight:760;
+}
+.preview-body p{
+  margin:0;
+  color:var(--text);
+  font-size:14px;
+  line-height:1.5;
+}
+.preview-foot{
+  padding:0 16px 15px;
+  color:var(--secondary);
+  font-size:11px;
+}
+.compact-row{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:72px minmax(0,1fr) 132px;
+  gap:12px;
+  align-items:center;
+  padding:12px 14px;
+  border:1px solid var(--separator);
+  border-radius:18px;
+  background:var(--surface);
+}
+.time-box{
+  color:var(--secondary);
+  font-size:11px;
+  line-height:1.15;
+}
+.time-box strong{
+  display:block;
+  color:var(--text);
+  font-size:13px;
+  margin-bottom:3px;
+}
+.compact-text{
+  min-width:0;
+}
+.compact-text strong{
+  display:block;
+  font-size:14px;
+  line-height:1.2;
+}
+.compact-text small{
+  display:block;
+  margin-top:4px;
+  color:var(--secondary);
+  font-size:11px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.compact-mood{
+  justify-self:end;
+  width:132px;
+}
+.footer-note{
+  margin-top:14px;
+  color:var(--secondary);
+  font-size:12px;
+  line-height:1.5;
+}
+@media (max-width:520px){
+  .scale-wrap{grid-template-columns:36px minmax(0,1fr);gap:6px}
+  .zero{width:36px;height:36px}
+  .scale{height:36px}
+  .compact-row{grid-template-columns:62px minmax(0,1fr);gap:10px}
+  .compact-mood{grid-column:1/-1;justify-self:stretch;width:auto}
+  .mood-chip{min-width:108px}
+}
+@media (max-width:390px){
+  body{padding-left:12px;padding-right:12px}
+  .panel{padding-left:12px;padding-right:12px}
+  .palette-row{gap:4px}
+  .swatch i{border-radius:10px}
+}
 </style>
 </head>
 <body>
 <main>
-<p class="eyebrow">Registro Mental · Laboratório</p>
-<h1>Escala de humor</h1>
-<p class="intro">Protótipo isolado. Nada selecionado aqui é salvo nos registros da Beta.</p>
-<section class="card">
-<div class="label"><strong>Como você está?</strong><span>Toque em um valor</span></div>
-<div class="scale-wrap" role="group" aria-label="Estado emocional de zero a dez">
-<button class="zero" type="button" data-mood="0" aria-pressed="false" aria-label="Humor zero, estado excepcionalmente ruim">0</button>
-<div class="scale" id="scale">
-<div class="fill" id="fill" aria-hidden="true"></div>
-<div class="scale-grid">
-<button type="button" data-mood="1">1</button><button type="button" data-mood="2">2</button><button type="button" data-mood="3">3</button><button type="button" data-mood="4">4</button><button type="button" data-mood="5">5</button><button type="button" data-mood="6">6</button><button type="button" data-mood="7">7</button><button type="button" data-mood="8">8</button><button type="button" data-mood="9">9</button><button type="button" data-mood="10">10</button>
-</div>
-</div>
-</div>
-<div class="result" id="result"><strong>Nenhum valor selecionado</strong><small>O zero fica propositalmente fora da escala principal de 1 a 10.</small></div>
-</section>
-<p class="note">A barra principal agora funciona como uma cápsula de progresso: ao escolher uma nota de 1 a 10, ela é preenchida da esquerda até o valor selecionado. O zero permanece como um círculo separado, com a mesma altura e linguagem visual da barra.</p>
-<a class="back" href="./">← Voltar para a Beta</a>
+  <p class="eyebrow">Registro Mental · Laboratório</p>
+  <h1>Escala de humor</h1>
+  <p class="intro">Versão pronta para você lapidar. O layout da barra foi preservado e abaixo já existe uma pré-visualização de como o humor pode aparecer no cartão do registro.</p>
+
+  <div class="stack">
+    <section class="panel">
+      <h2>Seleção do humor</h2>
+      <p class="sub">Zero separado à esquerda. De 1 a 10 dentro da cápsula de progresso.</p>
+
+      <div class="scale-wrap" role="group" aria-label="Estado emocional de zero a dez">
+        <button class="zero" type="button" data-mood="0" aria-pressed="false" aria-label="Humor zero, estado excepcionalmente ruim">0</button>
+
+        <div class="scale" id="scale">
+          <div class="fill" id="fill" aria-hidden="true"></div>
+          <div class="scale-grid">
+            <button type="button" data-mood="1">1</button>
+            <button type="button" data-mood="2">2</button>
+            <button type="button" data-mood="3">3</button>
+            <button type="button" data-mood="4">4</button>
+            <button type="button" data-mood="5">5</button>
+            <button type="button" data-mood="6">6</button>
+            <button type="button" data-mood="7">7</button>
+            <button type="button" data-mood="8">8</button>
+            <button type="button" data-mood="9">9</button>
+            <button type="button" data-mood="10">10</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="selection-summary" id="selectionSummary">
+        <strong>Nenhum valor selecionado</strong>
+        <small>O zero permanece fora da escala comum para representar um estado excepcionalmente ruim.</small>
+      </div>
+
+      <div class="palette-row" aria-label="Resumo da paleta">
+        <div class="swatch"><i style="background:#2A223A"></i><span>0</span></div>
+        <div class="swatch"><i style="background:#FF4B4B"></i><span>1</span></div>
+        <div class="swatch"><i style="background:#FF7A1A"></i><span>2</span></div>
+        <div class="swatch"><i style="background:#FF9F0A"></i><span>3</span></div>
+        <div class="swatch"><i style="background:#FFD60A"></i><span>4</span></div>
+        <div class="swatch"><i style="background:#FFE119"></i><span>5</span></div>
+        <div class="swatch"><i style="background:#BEEA2E"></i><span>6</span></div>
+        <div class="swatch"><i style="background:#57D65A"></i><span>7</span></div>
+        <div class="swatch"><i style="background:#31C46C"></i><span>8</span></div>
+        <div class="swatch"><i style="background:#20D6A3"></i><span>9</span></div>
+        <div class="swatch"><i style="background:#39E6D4"></i><span>10</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Pré-visualização no cartão do registro</h2>
+      <p class="sub">Exemplo vivo de como a nota pode aparecer quando uma anotação for salva.</p>
+
+      <div class="preview-card">
+        <div class="preview-header">
+          <div class="preview-title">
+            <small>Registro</small>
+            <strong>Anotação</strong>
+          </div>
+
+          <div class="mood-chip" id="moodChip">
+            <div class="mood-chip-top">
+              <strong>Humor</strong>
+              <span id="chipValue">7</span>
+            </div>
+            <div class="mood-mini">
+              <div class="mood-mini-fill" id="chipFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-body">
+          <div class="meta">
+            <span class="kind-badge">✎ Anotação</span>
+            <span class="dot"></span>
+            <span>Hoje · 02:45</span>
+          </div>
+          <p id="previewText">Hoje me senti mais estável. Ainda cansado em alguns momentos, mas com disposição razoável e menos peso emocional.</p>
+        </div>
+
+        <div class="preview-foot" id="previewFoot">
+          Visual sugerido: número + mini barra preenchida.
+        </div>
+      </div>
+
+      <div class="compact-row">
+        <div class="time-box">
+          <strong>Hoje</strong>
+          02:45
+        </div>
+        <div class="compact-text">
+          <strong>Anotação</strong>
+          <small>Exemplo compacto para listas e histórico.</small>
+        </div>
+        <div class="compact-mood mood-chip" id="compactMood">
+          <div class="mood-chip-top">
+            <strong>Humor</strong>
+            <span id="compactValue">7</span>
+          </div>
+          <div class="mood-mini">
+            <div class="mood-mini-fill" id="compactFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="footer-note">Nesta proposta, o humor salvo aparece de forma compacta: número + mini cápsula de intensidade, preservando a mesma lógica visual da barra principal.</p>
+    </section>
+  </div>
 </main>
+
 <script>
-(()=>{const fill=document.getElementById('fill'),result=document.getElementById('result'),buttons=[...document.querySelectorAll('[data-mood]')];const colors={0:'#7A1F1F',1:'#B3261E',2:'#C63C18',3:'#D95C0F',4:'#E68519',5:'#F0B429',6:'#C7C948',7:'#7DBE45',8:'#34A853',9:'#1E9E6A',10:'#0F9D58'};const descriptions={0:'Estado excepcionalmente ruim — fora da escala comum.',1:'Muito ruim.',2:'Muito ruim.',3:'Ruim.',4:'Abaixo do normal.',5:'Mediano.',6:'Razoável.',7:'Bem.',8:'Muito bem.',9:'Ótimo.',10:'Excelente.'};function select(value){const color=colors[value];document.documentElement.style.setProperty('--selected',color);buttons.forEach(b=>{const n=Number(b.dataset.mood),on=n===value;b.classList.toggle('selected',on);b.classList.toggle('filled',value>0&&n>0&&n<=value);b.setAttribute('aria-pressed',String(on))});fill.style.width=value===0?'0%':`${value*10}%`;result.innerHTML=`<strong>Humor selecionado: ${value}</strong><small>${descriptions[value]}</small>`;try{navigator.vibrate?.(10)}catch(_){}}buttons.forEach(b=>b.addEventListener('click',()=>select(Number(b.dataset.mood))));})();
+(() => {
+  const colors = {
+    0:'#2A223A',
+    1:'#FF4B4B',
+    2:'#FF7A1A',
+    3:'#FF9F0A',
+    4:'#FFD60A',
+    5:'#FFE119',
+    6:'#BEEA2E',
+    7:'#57D65A',
+    8:'#31C46C',
+    9:'#20D6A3',
+    10:'#39E6D4'
+  };
+
+  const labels = {
+    0:'Estado excepcionalmente ruim',
+    1:'Muito ruim',
+    2:'Muito ruim',
+    3:'Ruim',
+    4:'Abaixo do normal',
+    5:'Mediano',
+    6:'Razoável',
+    7:'Bem',
+    8:'Muito bem',
+    9:'Ótimo',
+    10:'Excelente'
+  };
+
+  const previewTexts = {
+    0:'Dia muito pesado emocionalmente, com sensação de esgotamento e pouca energia para qualquer coisa.',
+    1:'Humor muito baixo, com bastante peso emocional e pouca disposição.',
+    2:'Ainda bem difícil, mas um pouco menos intenso do que o pior ponto.',
+    3:'Dia ruim, com incômodo emocional presente na maior parte do tempo.',
+    4:'Abaixo do normal, mas já com alguns momentos de respiro.',
+    5:'Estado mediano, sem estar bem, mas também sem grande queda.',
+    6:'Razoável. Consegui tocar o dia com alguma estabilidade.',
+    7:'Hoje me senti mais estável. Ainda cansado em alguns momentos, mas com disposição razoável e menos peso emocional.',
+    8:'Me senti bem e mais leve, com boa presença e energia ao longo do dia.',
+    9:'Humor alto e consistente, com sensação clara de bem-estar.',
+    10:'Um dia excepcionalmente bom, leve e raro, com sensação de plenitude.'
+  };
+
+  const fill = document.getElementById('fill');
+  const buttons = [...document.querySelectorAll('[data-mood]')];
+  const summary = document.getElementById('selectionSummary');
+  const chipValue = document.getElementById('chipValue');
+  const compactValue = document.getElementById('compactValue');
+  const chipFill = document.getElementById('chipFill');
+  const compactFill = document.getElementById('compactFill');
+  const previewText = document.getElementById('previewText');
+  const previewFoot = document.getElementById('previewFoot');
+  const moodChip = document.getElementById('moodChip');
+  const compactMood = document.getElementById('compactMood');
+
+  function setCSSColor(color){
+    document.documentElement.style.setProperty('--fill', color);
+  }
+
+  function setProgress(value){
+    const width = value === 0 ? 0 : value * 10;
+    fill.style.width = width + '%';
+    chipFill.style.width = width + '%';
+    compactFill.style.width = width + '%';
+  }
+
+  function select(value){
+    const color = colors[value];
+    setCSSColor(color);
+
+    buttons.forEach(button => {
+      const n = Number(button.dataset.mood);
+      const selected = n === value;
+      const filled = value > 0 && n > 0 && n <= value;
+      button.classList.toggle('selected', selected);
+      button.classList.toggle('filled', filled);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+
+    setProgress(value);
+
+    const label = labels[value];
+    summary.innerHTML = '<strong>Humor selecionado: ' + value + '</strong><small>' + label + '. Esta paleta vai do violeta escuro no zero até o turquesa tiffany no 10.</small>';
+
+    chipValue.textContent = String(value);
+    compactValue.textContent = String(value);
+    previewText.textContent = previewTexts[value];
+    previewFoot.textContent = 'Visual sugerido: número ' + value + ' + mini barra preenchida com a cor correspondente ao humor.';
+    moodChip.style.borderColor = 'color-mix(in srgb, ' + color + ' 30%, var(--separator))';
+    moodChip.style.background = 'color-mix(in srgb, ' + color + ' 12%, var(--surface))';
+    compactMood.style.borderColor = 'color-mix(in srgb, ' + color + ' 30%, var(--separator))';
+    compactMood.style.background = 'color-mix(in srgb, ' + color + ' 12%, var(--surface))';
+
+    try { navigator.vibrate?.(10); } catch (_) {}
+  }
+
+  buttons.forEach(button => {
+    button.addEventListener('click', () => select(Number(button.dataset.mood)));
+  });
+
+  select(7);
+})();
 </script>
 </body>
 </html>
