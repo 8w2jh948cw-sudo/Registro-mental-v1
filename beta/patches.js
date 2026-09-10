@@ -173,15 +173,15 @@
       .sheet-close,
       .sheet-header .sheet-close,
       button.sheet-close {
-        width: 56px !important;
-        height: 56px !important;
-        min-width: 56px !important;
-        min-height: 56px !important;
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
       }
       .sheet-close .rm-beta-x-icon,
       .sheet-close .rm-close-icon {
-        width: 40px !important;
-        height: 40px !important;
+        width: 36px !important;
+        height: 36px !important;
       }
       body.rm-appearance-subview .tab-bar { display:none !important; }
       body.rm-appearance-subview .content { padding-bottom:max(28px,env(safe-area-inset-bottom)) !important; }
