@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d10">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Histórico de versões · Registro Mental</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <style>
+    :root{--bg:#0d0d10;--card:#1a1a1f;--card2:#202027;--text:#f7f7f8;--muted:#9c9ca4;--line:#2c2c34;--violet:#9d7cff;--green:#4bd168;--blue:#5ac8fa;--orange:#ff9f0a}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
+    body{min-height:100dvh}
+    main{width:100%;max-width:560px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 15px calc(34px + env(safe-area-inset-bottom))}
+    a{-webkit-tap-highlight-color:transparent}
+    .back{display:inline-flex;align-items:center;gap:7px;color:var(--muted);text-decoration:none;font-size:14px;min-height:44px;padding:0 3px}
+    header{padding:9px 4px 18px}
+    h1{font-size:31px;line-height:1.05;margin:0 0 9px;letter-spacing:-.035em}
+    .lead{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+    .notice{margin:0 0 18px;padding:13px 14px;border:1px solid #35323f;background:#19181f;border-radius:16px;font-size:12px;line-height:1.45;color:var(--muted)}
+    .notice strong{color:var(--text)}
+    .current{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+    .current a{display:block;text-decoration:none;color:inherit;background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:18px;padding:14px;min-width:0}
+    .current a:active,.version:active{transform:scale(.988)}
+    .eyebrow{display:block;text-transform:uppercase;letter-spacing:.08em;font-size:9px;font-weight:800;color:var(--muted);margin-bottom:7px}
+    .current strong{font-size:15px;display:block;line-height:1.2;overflow-wrap:anywhere}
+    .current small{display:block;margin-top:4px;color:var(--muted);font-size:11px;line-height:1.35}
+    .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px}
+    .toolbar{position:sticky;top:0;z-index:2;background:rgba(13,13,16,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:8px 0 10px;margin:0 0 8px}
+    .segments{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#17171c;border:1px solid var(--line);padding:4px;border-radius:13px}
+    .segments button{appearance:none;border:0;border-radius:9px;background:transparent;color:var(--muted);min-height:38px;font:inherit;font-size:12px;font-weight:700;padding:0 8px}
+    .segments button.active{background:#2a2a32;color:var(--text)}
+    .section-title{margin:18px 4px 9px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#777780;font-weight:750}
+    .list{display:grid;gap:9px}
+    .version{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:17px;padding:13px 13px 13px 14px;min-height:82px;transition:transform .12s ease,border-color .12s ease}
+    .badge{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;flex:0 0 43px;background:#292932;border:1px solid #393942;color:var(--violet);font-weight:800;font-size:12px}
+    .version.beta .badge{color:#c7a8ff;background:#2b2141;border-color:#443266}
+    .copy{min-width:0;flex:1}
+    .copy strong{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:14px;line-height:1.2;margin-bottom:4px;overflow-wrap:anywhere}
+    .copy small{display:block;color:var(--muted);font-size:11.5px;line-height:1.38}
+    .kind{display:inline-flex;padding:3px 6px;border-radius:999px;font-size:8px;font-weight:800;letter-spacing:.04em;background:#17361f;color:#80e28f}
+    .kind.beta{background:#38216d;color:#c7a8ff}
+    .arrow{font-size:24px;color:#6f6f78;flex:0 0 auto}
+    .empty{display:none;padding:24px 10px;text-align:center;color:var(--muted);font-size:13px}
+    footer{margin-top:22px;padding:15px 4px 0;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;line-height:1.5}
+    footer a{color:var(--blue);text-decoration:none}
+    @media(max-width:360px){.current{grid-template-columns:1fr}.version{padding-left:12px}.badge{width:40px;height:40px;flex-basis:40px}}
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="../menu/">‹ Voltar ao menu</a>
+  <header>
+    <h1>Histórico de versões</h1>
+    <p class="lead">Abra o aplicativo como ele estava em versões anteriores, sem precisar navegar por commits ou código no GitHub.</p>
+  </header>
+
+  <div class="notice"><strong>Somente para consulta.</strong> As versões antigas abrem em um endereço separado do app atual. Use-as para comparar aparência e funcionamento; não registre dados reais nelas.</div>
+
+  <div class="current">
+    <a href="../"><span class="eyebrow"><span class="dot"></span>Atual</span><strong>Oficial 1.1.10</strong><small>Abrir a versão oficial em uso agora.</small></a>
+    <a href="../beta/"><span class="eyebrow"><span class="dot"></span>Atual</span><strong>Beta 1.2.0-beta.14</strong><small>Abrir a Beta em uso agora.</small></a>
+  </div>
+
+  <div class="toolbar">
+    <div class="segments" role="group" aria-label="Filtrar versões">
+      <button class="active" type="button" data-filter="all">Todas</button>
+      <button type="button" data-filter="official">Oficial</button>
+      <button type="button" data-filter="beta">Beta</button>
+    </div>
+  </div>
+
+  <div id="versions"></div>
+  <div class="empty" id="empty">Nenhuma versão encontrada.</div>
+
+  <footer>
+    A lista mostra as versões numeradas que conseguimos identificar no histórico do projeto. Alguns números podem ter sido pulados e, por isso, não aparecem. As cópias antigas são abertas por um CDN a partir do commit correspondente, em vez da interface do GitHub. <a href="https://github.com/viniciusnevesdev/Registro-mental-v1/commits/main" target="_blank" rel="noopener noreferrer">Histórico técnico completo</a>.
+  </footer>
+</main>
+<script>
+(() => {
+  const repo = 'viniciusnevesdev/Registro-mental-v1';
+  const versions = [
+    {kind:'official',version:'1.1.10',date:'9 set 2026',sha:'929724a4e6d3b33898652879bde5d53e30ad043a',desc:'Estado estável da Oficial após correções de boot e dados.'},
+    {kind:'beta',version:'1.2.0-beta.14',date:'9 set 2026',sha:'f0b10752c7314ca173d59187f9f6fa5ae5115c08',desc:'Beta com o visual aprovado mais recente.',path:'beta/'},
+    {kind:'beta',version:'1.2.0-beta.13',date:'8 set 2026',sha:'e2f415ddde28616703acbaf8f9cef0f07037e04c',desc:'Sincronização com a base estável e correção da tipografia.',path:'beta/'},
+    {kind:'official',version:'1.1.9',date:'8 set 2026',sha:'1a66742f7b6ca0c4d6d28204e91245bf1033c035',desc:'Passou a mostrar sempre os 6 registros mais recentes.'},
+    {kind:'official',version:'1.1.8',date:'8 set 2026',sha:'7bddab9df4ce541fbea0dd15a9d89c5f2b17871d',desc:'Watchdog visual, diagnóstico persistente e versão alinhada.'},
+    {kind:'official',version:'1.1.7',date:'8 set 2026',sha:'960f8d2cc535d299ce9acf1d5265afe935576f95',desc:'Correção da tela branca ligada aos seletores de paleta.'},
+    {kind:'official',version:'1.1.6',date:'8 set 2026',sha:'259e5b217ae78080918aa94203e50197499e096c',desc:'Correção da tela branca mantendo a paleta aprovada.'},
+    {kind:'official',version:'1.1.5',date:'8 set 2026',sha:'2a75e791ded2e7a8ecae33086f45cd08cbf3c73b',desc:'Paleta personalizada dos registros fixada.'},
+    {kind:'official',version:'1.1.4',date:'8 set 2026',sha:'151c7cbd7d0947f2a105e5c23044c091f5ecde3a',desc:'Rótulos das abas e sombras dos filtros.'},
+    {kind:'official',version:'1.1.3',date:'8 set 2026',sha:'742bc32f2a7bbad89d8d7ebdabff35d68ef012a5',desc:'Maior contraste da aba ativa.'},
+    {kind:'official',version:'1.1.2',date:'8 set 2026',sha:'9707658022c7c8f8d6d3f92b7cea44ae7185c520',desc:'Identificação da release e remoção dos seletores antigos de cor.'},
+    {kind:'beta',version:'1.2.0-beta.11',date:'7 set 2026',sha:'4bf725417eabf0a6e95d0352d65c8893423a689a',desc:'Ponte reversível de backups entre Beta e Oficial.',path:'beta/'},
+    {kind:'beta',version:'1.2.0-beta.6',date:'3 set 2026',sha:'9f41559535109437b7bff9bf49be61a404196899',desc:'Estado restaurado da Beta 6 após reversão do editor.',path:'beta/'},
+    {kind:'beta',version:'1.2.0-beta.5',date:'3 set 2026',sha:'c7859f33b945066a304764e1614d8ed370450b59',desc:'Correção das barras brancas do Safari no modo Ultra.',path:'beta/'},
+    {kind:'beta',version:'1.2.0-beta.4',date:'3 set 2026',sha:'c3f587dd1277b1f625c0d5e400a17586d663f5f1',desc:'Atualização isolada da Beta sem alterar a Oficial.',path:'beta/'},
+    {kind:'beta',version:'1.2.0-beta.3',date:'3 set 2026',sha:'2cb3b06e778c4fdeb8d9ca14193c3a627636bcb0',desc:'Importação segura de dados na Beta.',path:'beta/'},
+    {kind:'beta',version:'1.2.0-beta.2',date:'3 set 2026',sha:'8b8bb99d4ba9d64de37ef7a45d988ba45f9a8e99',desc:'Beta sem o campo de quantidade.',path:'beta/'},
+    {kind:'official',version:'1.1.1',date:'31 ago 2026',sha:'1db1b1886fa0ec48a41714b6a17df0d23c9ba68f',desc:'Transição segura do Service Worker antigo.'},
+    {kind:'official',version:'1.1.0',date:'31 ago 2026',sha:'aa18837ed267054aa843f6452d784ac286e96320',desc:'Boot resiliente e pipeline de publicação autossuficiente.'},
+    {kind:'official',version:'1.0.6',date:'31 ago 2026',sha:'b9c88cc75d8cdd37519a3c2aa540b51b36b8ad99',desc:'Correção da tela branca e sincronização da publicação.'},
+    {kind:'official',version:'1.0.4',date:'31 ago 2026',sha:'c1835ea535841a6da1d579e4a811f344037029af',desc:'Versão sem a opção de peso dos ícones.'},
+    {kind:'official',version:'1.0.3',date:'31 ago 2026',sha:'f05e23c1d8e007fa1023fa9f079f7cc0610f95f1',desc:'Ícone de duas estrelas restaurado.'},
+    {kind:'official',version:'1.0.2',date:'31 ago 2026',sha:'90278642de0356cf109df0b983ddb02625f214ed',desc:'Troca dos ícones spark e remoção do glow.'},
+    {kind:'official',version:'1.0.1',date:'31 ago 2026',sha:'431d327c4db622debfd434b17e7327179b0a87b2',desc:'Novo ícone de Aprendizado.'},
+    {kind:'official',version:'1.0.0',date:'31 ago 2026',sha:'6e6fbde5997b69657af84e7a7ee46586db52f307',desc:'Primeira versão consolidada identificada no repositório.'}
+  ];
+
+  const host = document.getElementById('versions');
+  const empty = document.getElementById('empty');
+  let filter = 'all';
+
+  function escapeHtml(value){
+    return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function urlFor(v){
+    const path = (v.path || '') + 'index.html';
+    return `https://cdn.jsdelivr.net/gh/${repo}@${v.sha}/${path}`;
+  }
+
+  function render(){
+    const visible = versions.filter(v => filter === 'all' || v.kind === filter);
+    host.innerHTML = '';
+    empty.style.display = visible.length ? 'none' : 'block';
+    if(!visible.length) return;
+
+    let lastKind = '';
+    visible.forEach(v => {
+      if(filter !== 'all' && lastKind !== v.kind){
+        const title = document.createElement('div');
+        title.className = 'section-title';
+        title.textContent = v.kind === 'beta' ? 'Versões Beta' : 'Versões Oficiais';
+        host.appendChild(title);
+        lastKind = v.kind;
+      }
+      const a = document.createElement('a');
+      a.className = `version ${v.kind === 'beta' ? 'beta' : ''}`;
+      a.href = urlFor(v);
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      const short = v.kind === 'beta' ? 'β' : 'v';
+      a.innerHTML = `<span class="badge">${short}</span><span class="copy"><strong>${escapeHtml(v.version)} <span class="kind ${v.kind === 'beta' ? 'beta' : ''}">${v.kind === 'beta' ? 'BETA' : 'OFICIAL'}</span></strong><small>${escapeHtml(v.date)} · ${escapeHtml(v.desc)}</small></span><span class="arrow">›</span>`;
+      host.appendChild(a);
+    });
+  }
+
+  document.querySelectorAll('[data-filter]').forEach(button => {
+    button.addEventListener('click', () => {
+      filter = button.dataset.filter;
+      document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b === button));
+      render();
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
