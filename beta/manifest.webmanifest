@@ -15,9 +15,9 @@
   ],
   "icons": [
     {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./icon-beta.jpeg?v=20260911",
+      "sizes": "1536x1536",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ]
