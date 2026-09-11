@@ -3,84 +3,194 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#111114">
   <meta name="robots" content="noindex,nofollow">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Registro Menu">
   <title>Menu · Registro Mental</title>
+  <link rel="manifest" href="./menu.webmanifest?v=20260911">
   <link rel="icon" href="./icon-menu.jpeg?v=20260911" type="image/jpeg">
   <link rel="apple-touch-icon" href="./icon-menu.jpeg?v=20260911">
   <style>
-    :root{--bg:#0d0d10;--card:#1a1a1f;--card2:#202027;--text:#f7f7f8;--muted:#9c9ca4;--line:#2c2c34;--violet:#9d7cff;--green:#4bd168;--orange:#ff9f0a;--blue:#5ac8fa}
+    :root{
+      --bg:#f5f5f7;--surface:#fff;--surface2:#f0f0f4;--text:#121217;--muted:#686875;
+      --line:rgba(20,20,30,.10);--shadow:0 10px 30px rgba(20,20,30,.07);
+      --violet:#7456e8;--green:#258a43;--orange:#c87300;--blue:#1879c9;
+      --stable-bg:#e5f6e9;--stable-text:#23743b;--beta-bg:#eee8ff;--beta-text:#6b4bd0;
+      --icon-bg:rgba(120,120,135,.10);--chev:#92929e;--glass:rgba(255,255,255,.72)
+    }
+    @media(prefers-color-scheme:dark){
+      :root{
+        --bg:#0b0b0f;--surface:#18181e;--surface2:#202027;--text:#f7f7f8;--muted:#9b9ba6;
+        --line:rgba(255,255,255,.09);--shadow:0 12px 34px rgba(0,0,0,.28);
+        --violet:#a78bff;--green:#63d57c;--orange:#ffad3d;--blue:#63bdff;
+        --stable-bg:#17361f;--stable-text:#80e28f;--beta-bg:#38216d;--beta-text:#cfb8ff;
+        --icon-bg:rgba(255,255,255,.065);--chev:#70707a;--glass:rgba(20,20,25,.72)
+      }
+    }
     *{box-sizing:border-box}
-    html,body{margin:0;width:100%;max-width:100%;min-height:100%;overflow-x:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
+    html,body{margin:0;width:100%;min-height:100%;overflow-x:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif}
     body{min-height:100dvh}
-    main{width:100%;max-width:480px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 16px calc(34px + env(safe-area-inset-bottom));overflow:hidden}
-    header{padding:4px 4px 20px}
-    h1{font-size:32px;line-height:1.05;margin:0 0 8px;letter-spacing:-.035em}
-    .lead{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
-    .section-title{margin:22px 4px 9px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#777780;font-weight:750}
-    .grid{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .card{width:100%;min-width:0;overflow:hidden;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:19px;padding:14px;min-height:82px;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,border-color .12s ease}
-    .card:active{transform:scale(.985);border-color:#555561}
-    .card.wide{grid-column:1/-1}
-    .app-card{box-sizing:border-box;min-height:184px;height:184px;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:17px 12px;text-align:center}
-    .icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex:0 0 48px;background:#292932;border:1px solid #373742;overflow:hidden}
-    .icon svg{display:block;width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-    .app-card .icon{width:64px;height:64px;flex-basis:64px;border-radius:18px;background:transparent;border:0}
-    .app-card .icon img{display:block;width:64px;height:64px;object-fit:contain}
-    .copy{min-width:0;flex:1;overflow:hidden}
-    .app-card .copy{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center}
-    .copy strong{display:flex;min-width:0;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px 7px;font-size:15px;line-height:1.18;margin-bottom:5px;text-align:center;overflow-wrap:anywhere}
-    .copy small{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;overflow-wrap:anywhere}
-    .app-card .copy small{width:100%;text-align:center}
-    .tag{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:3px 7px;border-radius:999px;font-size:9px;line-height:1;white-space:nowrap;font-weight:800;letter-spacing:.03em}
-    .tag.stable{background:#17361f;color:#80e28f}.tag.beta{background:#38216d;color:#c7a8ff}
-    .arrow{flex:0 0 auto;align-self:center;color:#6f6f78;font-size:24px;line-height:1;margin-left:auto}
-    .note{margin:18px 4px 0;padding:13px 14px;border-radius:15px;background:#17171c;border:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.45}.note strong{color:var(--text)}
-    @media(max-width:400px){main{padding-left:14px;padding-right:14px}.grid{gap:9px}.card{padding:12px;gap:10px}.app-card{min-height:174px;height:174px;padding:14px 10px;gap:8px}.app-card .icon{width:58px;height:58px;flex-basis:58px}.app-card .icon img{width:58px;height:58px}.icon{width:44px;height:44px;flex-basis:44px}.icon svg{width:25px;height:25px}.copy strong{font-size:14px}.copy small{font-size:11px}}
-    @media(max-width:340px){.app-card{min-height:170px;height:170px}.app-card .icon{width:56px;height:56px;flex-basis:56px}.app-card .icon img{width:56px;height:56px}}
-    @media(max-width:340px){.grid{grid-template-columns:1fr}.card.wide{grid-column:auto}}
+    a{-webkit-tap-highlight-color:transparent}
+    main{width:min(100%,560px);margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 15px calc(34px + env(safe-area-inset-bottom))}
+    .hero{display:flex;align-items:center;gap:14px;padding:4px 3px 18px}
+    .hero-logo{width:68px;height:68px;border-radius:20px;display:block;object-fit:cover;box-shadow:var(--shadow);flex:0 0 68px}
+    h1{margin:0 0 5px;font-size:30px;line-height:1.03;letter-spacing:-.04em}
+    .lead{margin:0;color:var(--muted);font-size:13px;line-height:1.42}
+    .section{margin-top:20px}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 4px 9px}
+    .section-title{font-size:11px;line-height:1.2;font-weight:800;letter-spacing:.085em;text-transform:uppercase;color:var(--muted)}
+    .section-note{font-size:10px;color:var(--muted);text-align:right}
+    .apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .app-card{min-width:0;height:185px;text-decoration:none;color:inherit;background:linear-gradient(180deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:22px;padding:15px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:var(--shadow);overflow:hidden;transition:transform .12s ease}
+    .app-card:active,.row:active,.mini:active{transform:scale(.985)}
+    .app-icon{width:70px;height:70px;border-radius:20px;object-fit:cover;display:block;margin-bottom:11px}
+    .app-name{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;font-size:16px;font-weight:780;line-height:1.1;margin-bottom:6px}
+    .tag{display:inline-flex;align-items:center;justify-content:center;padding:3px 7px;border-radius:999px;font-size:8px;font-weight:850;letter-spacing:.045em;white-space:nowrap}
+    .tag.stable{background:var(--stable-bg);color:var(--stable-text)}
+    .tag.beta{background:var(--beta-bg);color:var(--beta-text)}
+    .app-desc{font-size:11.5px;line-height:1.37;color:var(--muted)}
+    .stack{display:grid;gap:9px}
+    .row,.mini{min-width:0;text-decoration:none;color:inherit;background:linear-gradient(180deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);transition:transform .12s ease}
+    .row{display:flex;align-items:center;gap:12px;padding:13px;min-height:78px}
+    .mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .mini{display:flex;align-items:center;gap:10px;padding:12px;min-height:73px}
+    .tool-icon{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;flex:0 0 44px;background:var(--icon-bg)}
+    .tool-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .copy{min-width:0;flex:1}
+    .copy strong{display:block;font-size:14px;line-height:1.2;margin-bottom:4px;overflow-wrap:anywhere}
+    .copy small{display:block;color:var(--muted);font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+    .chev{flex:0 0 auto;color:var(--chev);font-size:23px;line-height:1}
+    .violet{color:var(--violet)}.green{color:var(--green)}.orange{color:var(--orange)}.blue{color:var(--blue)}
+    details{border:1px solid var(--line);border-radius:18px;background:var(--surface);overflow:hidden;box-shadow:var(--shadow)}
+    summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:750;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    summary::-webkit-details-marker{display:none}
+    summary::after{content:"+";color:var(--muted);font-size:21px;font-weight:400}
+    details[open] summary::after{content:"−"}
+    .details-body{padding:0 10px 10px}
+    .details-body .mini-grid{gap:8px}
+    .details-body .mini{box-shadow:none;background:var(--surface2)}
+    .note{margin-top:20px;padding:13px 14px;border-radius:16px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:var(--muted);font-size:11.5px;line-height:1.45}
+    .note strong{color:var(--text)}
+    footer{padding:22px 4px 0;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.45}
+    @media(max-width:390px){
+      main{padding-left:13px;padding-right:13px}.hero-logo{width:62px;height:62px;flex-basis:62px;border-radius:18px}h1{font-size:27px}
+      .app-card{height:176px;padding:13px 10px}.app-icon{width:64px;height:64px;border-radius:18px}.app-name{font-size:15px}.app-desc{font-size:10.8px}
+      .mini{padding:10px;gap:8px}.tool-icon{width:40px;height:40px;flex-basis:40px}.tool-icon svg{width:22px;height:22px}.copy strong{font-size:13px}.copy small{font-size:10.5px}
+    }
+    @media(max-width:330px){.apps,.mini-grid{grid-template-columns:1fr}.app-card{height:auto;min-height:170px}.section-note{display:none}}
   </style>
 </head>
 <body>
 <main>
-  <header><h1>Registro Mental</h1><p class="lead">Menu de acesso aos ambientes, testes e ferramentas de recuperação.</p></header>
-  <div class="section-title">Apps</div>
-  <div class="grid">
-    <a class="card app-card" href="./"><span class="icon"><img src="./icon-oficial.jpeg?v=20260911" alt=""></span><span class="copy"><strong>Oficial <span class="tag stable">ESTÁVEL</span></strong><small>Uso diário · v1.2.0<br>Seus dados reais.</small></span></a>
-    <a class="card app-card" href="./beta/"><span class="icon"><img src="./beta/icon-beta.jpeg?v=20260911" alt=""></span><span class="copy"><strong>Beta <span class="tag beta">BETA</span></strong><small>Testes · v1.2.0-beta.14<br>Dados isolados.</small></span></a>
-  </div>
-  <div class="section-title">Histórico</div>
-  <div class="grid">
-    <a class="card wide" href="./historico/"><span class="icon" style="color:var(--violet)"><svg viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4.5 4.5A8.5 8.5 0 1 1 3.8 15"/><path d="M12 7v5l3 2"/></svg></span><span class="copy"><strong>Histórico de versões</strong><small>Abra versões antigas do app para comparar como ele estava, sem navegar por código ou commits.</small></span><span class="arrow">›</span></a>
-  </div>
-  <div class="section-title">Diagnóstico</div>
-  <div class="grid">
-    <a class="card wide" href="./diagnostico/"><span class="icon" style="color:var(--violet)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M12 4V2.5M12 21.5V20M4 12H2.5M21.5 12H20"/><path d="M8.5 12.2 10.7 14.4 15.8 9.3"/></svg></span><span class="copy"><strong>Central de Diagnóstico</strong><small>Reúne as ferramentas de abertura, recuperação e modo seguro.</small></span><span class="arrow">›</span></a>
-  </div>
-  <div class="section-title">Ferramentas do Oficial</div>
-  <div class="grid">
-    <a class="card" href="./launch.html"><span class="icon" style="color:var(--blue)"><svg viewBox="0 0 24 24"><path d="M14.2 4.1c2.2-1.1 4.2-1.2 5.7-1-0.1 1.6-.5 3.7-2 5.8l-5.4 7.5-4.9-4.9 6.6-7.4Z"/><circle cx="15.3" cy="7.7" r="1.4"/><path d="M8.2 12.1 4 13.3l-1.7 3.4 5.3-.7M12 15.8l-1.2 4.1-3.4 1.8.7-5.4"/></svg></span><span class="copy"><strong>Inicializador</strong><small>Abertura limpa do Oficial.</small></span></a>
-    <a class="card" href="./recover.html"><span class="icon" style="color:var(--orange)"><svg viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4.5 4.5A8.5 8.5 0 1 1 3.8 15"/><path d="M12 8v4l2.7 1.7"/></svg></span><span class="copy"><strong>Recuperação</strong><small>Limpa apenas a interface/cache.</small></span></a>
-    <a class="card wide" href="./safe.html"><span class="icon" style="color:var(--green)"><svg viewBox="0 0 24 24"><path d="M12 2.8 5.2 5.7v5.1c0 4.7 2.7 8 6.8 10.2 4.1-2.2 6.8-5.5 6.8-10.2V5.7L12 2.8Z"/><path d="m8.8 12 2.1 2.1 4.5-4.6"/></svg></span><span class="copy"><strong>Modo Seguro</strong><small>Verifica seus dados e permite backup mesmo se o app principal falhar.</small></span><span class="arrow">›</span></a>
-  </div>
-  <div class="section-title">Ferramentas da Beta</div>
-  <div class="grid">
-    <a class="card" href="./beta/launch.html"><span class="icon" style="color:var(--blue)"><svg viewBox="0 0 24 24"><path d="M14.2 4.1c2.2-1.1 4.2-1.2 5.7-1-0.1 1.6-.5 3.7-2 5.8l-5.4 7.5-4.9-4.9 6.6-7.4Z"/><circle cx="15.3" cy="7.7" r="1.4"/><path d="M8.2 12.1 4 13.3l-1.7 3.4 5.3-.7M12 15.8l-1.2 4.1-3.4 1.8.7-5.4"/></svg></span><span class="copy"><strong>Inicializador Beta</strong><small>Abertura limpa da Beta.</small></span></a>
-    <a class="card" href="./beta/recover.html"><span class="icon" style="color:var(--orange)"><svg viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4.5 4.5A8.5 8.5 0 1 1 3.8 15"/><path d="M12 8v4l2.7 1.7"/></svg></span><span class="copy"><strong>Recuperar Beta</strong><small>Não toca no Oficial.</small></span></a>
-    <a class="card wide" href="./beta/safe.html"><span class="icon" style="color:var(--green)"><svg viewBox="0 0 24 24"><path d="M12 2.8 5.2 5.7v5.1c0 4.7 2.7 8 6.8 10.2 4.1-2.2 6.8-5.5 6.8-10.2V5.7L12 2.8Z"/><path d="m8.8 12 2.1 2.1 4.5-4.6"/></svg></span><span class="copy"><strong>Modo Seguro Beta</strong><small>Inspeciona somente os dados descartáveis de testes.</small></span><span class="arrow">›</span></a>
-  </div>
-  <div class="section-title">Desenvolvimento</div>
-  <div class="grid">
-    <a class="card wide" href="https://github.com/viniciusnevesdev/Registro-mental-v1" target="_blank" rel="noopener noreferrer"><span class="icon" style="color:var(--text)"><svg viewBox="0 0 24 24"><path d="M8.5 18.5c-4.5 1.4-4.5-2.3-6.3-2.8M14.8 21v-3.4c0-1 .1-1.5-.5-2.1 3-.3 6.2-1.5 6.2-6.7 0-1.5-.5-2.7-1.4-3.7.1-.4.6-1.8-.2-3.6 0 0-1.1-.4-3.8 1.4a13 13 0 0 0-6.8 0C5.7 1.1 4.5 1.5 4.5 1.5c-.7 1.8-.3 3.2-.1 3.6C3.5 6.1 3 7.3 3 8.8c0 5.2 3.2 6.4 6.2 6.7-.5.5-.8 1.2-.8 2.1V21"/></svg></span><span class="copy"><strong>Repositório no GitHub</strong><small>Código, arquivos publicados e documentação do projeto.</small></span><span class="arrow">›</span></a>
-    <a class="card" href="https://github.com/viniciusnevesdev/Registro-mental-v1/commits/main" target="_blank" rel="noopener noreferrer"><span class="icon" style="color:var(--blue)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 12h6m6 0h6"/></svg></span><span class="copy"><strong>Commits (avançado)</strong><small>Histórico técnico no GitHub.</small></span></a>
-    <a class="card" href="https://github.com/viniciusnevesdev/Registro-mental-v1/branches" target="_blank" rel="noopener noreferrer"><span class="icon" style="color:var(--violet)"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><path d="M6 7v10M18 7v2c0 3.3-2.7 6-6 6H8"/></svg></span><span class="copy"><strong>Branches</strong><small>Oficial, desenvolvimento e backups.</small></span></a>
-    <a class="card" href="https://github.com/viniciusnevesdev/Registro-mental-v1/actions" target="_blank" rel="noopener noreferrer"><span class="icon" style="color:var(--green)"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 8.5 6"/><path d="M18 3h3v3M21 3l-5 5"/><path d="m9 8 6 4-6 4Z"/></svg></span><span class="copy"><strong>Publicações</strong><small>Actions, validações e estado dos builds.</small></span></a>
-    <a class="card" href="https://github.com/viniciusnevesdev/Registro-mental-v1/issues" target="_blank" rel="noopener noreferrer"><span class="icon" style="color:var(--orange)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/></svg></span><span class="copy"><strong>Problemas</strong><small>Relatar e acompanhar bugs.</small></span></a>
-  </div>
-  <div class="note"><strong>Importante:</strong> a Beta continua usando armazenamento separado. Copiar dados do Oficial para a Beta cria uma cópia independente; alterações feitas depois na Beta não modificam seus registros reais.</div>
+  <header class="hero">
+    <img class="hero-logo" src="./icon-menu.jpeg?v=20260911" alt="">
+    <div><h1>Registro Mental</h1><p class="lead">Central de acesso aos apps, versões, recuperação e ferramentas do projeto.</p></div>
+  </header>
+
+  <section class="section">
+    <div class="section-head"><div class="section-title">Apps</div><div class="section-note">acessos principais</div></div>
+    <div class="apps">
+      <a class="app-card" href="./">
+        <img class="app-icon" src="./icon-oficial.jpeg?v=20260911" alt="">
+        <div class="app-name">Oficial <span class="tag stable">ESTÁVEL</span></div>
+        <div class="app-desc">Uso diário · v1.2.0<br>Banco de dados real.</div>
+      </a>
+      <a class="app-card" href="./beta/">
+        <img class="app-icon" src="./beta/icon-beta.jpeg?v=20260911" alt="">
+        <div class="app-name">Beta <span class="tag beta">BETA</span></div>
+        <div class="app-desc">Testes · v1.2.0-beta.14<br>Dados isolados.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div class="section-title">Versões e diagnóstico</div></div>
+    <div class="stack">
+      <a class="row" href="./historico/">
+        <span class="tool-icon violet"><svg viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4.5 4.5A8.5 8.5 0 1 1 3.8 15"/><path d="M12 7v5l3 2"/></svg></span>
+        <span class="copy"><strong>Histórico de versões</strong><small>Abra snapshots antigos do app e compare estados anteriores.</small></span><span class="chev">›</span>
+      </a>
+      <a class="row" href="./diagnostico/">
+        <span class="tool-icon blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M12 4V2.5M12 21.5V20M4 12H2.5M21.5 12H20"/><path d="m8.5 12.2 2.2 2.2 5.1-5.1"/></svg></span>
+        <span class="copy"><strong>Central de diagnóstico</strong><small>Atalhos para inicialização limpa, recuperação e modo seguro.</small></span><span class="chev">›</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div class="section-title">Segurança e recuperação</div></div>
+    <details open>
+      <summary>Oficial</summary>
+      <div class="details-body"><div class="mini-grid">
+        <a class="mini" href="./launch.html"><span class="tool-icon blue"><svg viewBox="0 0 24 24"><path d="M14.2 4.1c2.2-1.1 4.2-1.2 5.7-1-.1 1.6-.5 3.7-2 5.8l-5.4 7.5-4.9-4.9 6.6-7.4Z"/><circle cx="15.3" cy="7.7" r="1.4"/></svg></span><span class="copy"><strong>Inicializador</strong><small>Abertura limpa.</small></span></a>
+        <a class="mini" href="./recover.html"><span class="tool-icon orange"><svg viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4.5 4.5A8.5 8.5 0 1 1 3.8 15"/><path d="M12 8v4l2.7 1.7"/></svg></span><span class="copy"><strong>Recuperação</strong><small>Cache e interface.</small></span></a>
+        <a class="mini" href="./safe.html"><span class="tool-icon green"><svg viewBox="0 0 24 24"><path d="M12 2.8 5.2 5.7v5.1c0 4.7 2.7 8 6.8 10.2 4.1-2.2 6.8-5.5 6.8-10.2V5.7L12 2.8Z"/><path d="m8.8 12 2.1 2.1 4.5-4.6"/></svg></span><span class="copy"><strong>Modo seguro</strong><small>Inspeção e backup.</small></span></a>
+        <a class="mini" href="./diagnostico.html"><span class="tool-icon violet"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V5m7 14v-7"/><path d="M3 21h18"/></svg></span><span class="copy"><strong>Diagnóstico direto</strong><small>Página técnica.</small></span></a>
+      </div></div>
+    </details>
+    <div style="height:9px"></div>
+    <details>
+      <summary>Beta</summary>
+      <div class="details-body"><div class="mini-grid">
+        <a class="mini" href="./beta/launch.html"><span class="tool-icon blue"><svg viewBox="0 0 24 24"><path d="M14.2 4.1c2.2-1.1 4.2-1.2 5.7-1-.1 1.6-.5 3.7-2 5.8l-5.4 7.5-4.9-4.9 6.6-7.4Z"/><circle cx="15.3" cy="7.7" r="1.4"/></svg></span><span class="copy"><strong>Inicializador Beta</strong><small>Abertura limpa.</small></span></a>
+        <a class="mini" href="./beta/recover.html"><span class="tool-icon orange"><svg viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4.5 4.5A8.5 8.5 0 1 1 3.8 15"/><path d="M12 8v4l2.7 1.7"/></svg></span><span class="copy"><strong>Recuperar Beta</strong><small>Não toca no Oficial.</small></span></a>
+        <a class="mini" href="./beta/safe.html"><span class="tool-icon green"><svg viewBox="0 0 24 24"><path d="M12 2.8 5.2 5.7v5.1c0 4.7 2.7 8 6.8 10.2 4.1-2.2 6.8-5.5 6.8-10.2V5.7L12 2.8Z"/><path d="m8.8 12 2.1 2.1 4.5-4.6"/></svg></span><span class="copy"><strong>Modo seguro Beta</strong><small>Dados de teste.</small></span></a>
+        <a class="mini" href="./beta/diagnostico.html"><span class="tool-icon violet"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V5m7 14v-7"/><path d="M3 21h18"/></svg></span><span class="copy"><strong>Diagnóstico Beta</strong><small>Página técnica.</small></span></a>
+      </div></div>
+    </details>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div class="section-title">Laboratórios e editores</div><div class="section-note">uso avançado</div></div>
+    <details>
+      <summary>Ferramentas do Oficial</summary>
+      <div class="details-body"><div class="mini-grid">
+        <a class="mini" href="./dev-editor.html"><span class="tool-icon violet"><svg viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/></svg></span><span class="copy"><strong>Editor de desenvolvimento</strong><small>Ajustes técnicos.</small></span></a>
+        <a class="mini" href="./preview-escala-humor.html"><span class="tool-icon orange"><svg viewBox="0 0 24 24"><path d="M4 17V7m4 10V10m4 7V5m4 12v-4m4 4V8"/></svg></span><span class="copy"><strong>Prévia emocional</strong><small>Teste da escala.</small></span></a>
+        <a class="mini" href="./tabbar-lab.html"><span class="tool-icon blue"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 19h16"/><circle cx="9" cy="12" r="3"/><path d="M12 12h8M4 12h2"/></svg></span><span class="copy"><strong>Lab da barra inferior</strong><small>Visual e comportamento.</small></span></a>
+        <a class="mini" href="./tabbar-editor.html"><span class="tool-icon green"><svg viewBox="0 0 24 24"><path d="M4 18h16M6 14h12M8 10h8M10 6h4"/></svg></span><span class="copy"><strong>Editor da barra</strong><small>Edição direta.</small></span></a>
+      </div></div>
+    </details>
+    <div style="height:9px"></div>
+    <details>
+      <summary>Ferramentas da Beta</summary>
+      <div class="details-body"><div class="mini-grid">
+        <a class="mini" href="./beta/dev-editor.html"><span class="tool-icon violet"><svg viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/></svg></span><span class="copy"><strong>Editor Beta</strong><small>Ajustes técnicos.</small></span></a>
+        <a class="mini" href="./beta/preview-escala-humor.html"><span class="tool-icon orange"><svg viewBox="0 0 24 24"><path d="M4 17V7m4 10V10m4 7V5m4 12v-4m4 4V8"/></svg></span><span class="copy"><strong>Prévia emocional Beta</strong><small>Teste da escala.</small></span></a>
+        <a class="mini" href="./beta/tabbar-lab.html"><span class="tool-icon blue"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 19h16"/><circle cx="9" cy="12" r="3"/><path d="M12 12h8M4 12h2"/></svg></span><span class="copy"><strong>Lab da barra Beta</strong><small>Visual e comportamento.</small></span></a>
+        <a class="mini" href="./beta/tabbar-editor.html"><span class="tool-icon green"><svg viewBox="0 0 24 24"><path d="M4 18h16M6 14h12M8 10h8M10 6h4"/></svg></span><span class="copy"><strong>Editor da barra Beta</strong><small>Edição direta.</small></span></a>
+        <a class="mini" href="./beta/mood-lab.html"><span class="tool-icon violet"><svg viewBox="0 0 24 24"><path d="M5 16c2.2-3 4.4-4.5 7-4.5S16.8 13 19 16"/><circle cx="9" cy="8" r=".8" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r=".8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="9"/></svg></span><span class="copy"><strong>Mood Lab</strong><small>Experimentos de humor.</small></span></a>
+        <a class="mini" href="./beta/mood-lab-review.html"><span class="tool-icon orange"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="m8 12 2.2 2.2L16 8.5"/></svg></span><span class="copy"><strong>Revisão Mood Lab</strong><small>Revisão dos testes.</small></span></a>
+      </div></div>
+    </details>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div class="section-title">Desenvolvimento e arquivo</div></div>
+    <div class="stack">
+      <a class="row" href="https://github.com/viniciusnevesdev/Registro-mental-v1" target="_blank" rel="noopener noreferrer">
+        <span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M8.5 18.5c-4.5 1.4-4.5-2.3-6.3-2.8M14.8 21v-3.4c0-1 .1-1.5-.5-2.1 3-.3 6.2-1.5 6.2-6.7 0-1.5-.5-2.7-1.4-3.7.1-.4.6-1.8-.2-3.6 0 0-1.1-.4-3.8 1.4a13 13 0 0 0-6.8 0C5.7 1.1 4.5 1.5 4.5 1.5c-.7 1.8-.3 3.2-.1 3.6C3.5 6.1 3 7.3 3 8.8c0 5.2 3.2 6.4 6.2 6.7-.5.5-.8 1.2-.8 2.1V21"/></svg></span>
+        <span class="copy"><strong>Repositório atual</strong><small>Registro-mental-v1 · código publicado e documentação.</small></span><span class="chev">›</span>
+      </a>
+      <div class="mini-grid">
+        <a class="mini" href="https://github.com/viniciusnevesdev/Registro-mental-v1/commits/main" target="_blank" rel="noopener noreferrer"><span class="tool-icon blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 12h6m6 0h6"/></svg></span><span class="copy"><strong>Commits</strong><small>Histórico técnico.</small></span></a>
+        <a class="mini" href="https://github.com/viniciusnevesdev/Registro-mental-v1/branches" target="_blank" rel="noopener noreferrer"><span class="tool-icon violet"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><path d="M6 7v10M18 7v2c0 3.3-2.7 6-6 6H8"/></svg></span><span class="copy"><strong>Branches</strong><small>Linhas de trabalho.</small></span></a>
+        <a class="mini" href="https://github.com/viniciusnevesdev/Registro-mental-v1/actions" target="_blank" rel="noopener noreferrer"><span class="tool-icon green"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 8.5 6"/><path d="M18 3h3v3M21 3l-5 5"/></svg></span><span class="copy"><strong>Publicações</strong><small>Actions e builds.</small></span></a>
+        <a class="mini" href="https://github.com/viniciusnevesdev/Registro-mental-v1/issues" target="_blank" rel="noopener noreferrer"><span class="tool-icon orange"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/></svg></span><span class="copy"><strong>Problemas</strong><small>Issues do projeto.</small></span></a>
+      </div>
+      <a class="row" href="https://github.com/viniciusnevesdev/Registro-mental-pwa" target="_blank" rel="noopener noreferrer">
+        <span class="tool-icon orange"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M7 7V4h10v3M8 11h8M8 15h5"/></svg></span>
+        <span class="copy"><strong>Arquivo legado 0.4.x</strong><small>Repositório antigo Registro-mental-pwa, mantido apenas como referência histórica.</small></span><span class="chev">›</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="note"><strong>Dados separados:</strong> Oficial e Beta usam bancos diferentes. A Beta serve para testes e não altera diretamente seus registros reais da Oficial.</div>
+  <footer>Menu Geral · Registro Mental · atualizado em 11 set 2026</footer>
 </main>
 </body>
 </html>
