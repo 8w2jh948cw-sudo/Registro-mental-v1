@@ -706,15 +706,10 @@
       const card = template.content.firstElementChild;
       if (!card) return html;
 
-      const header = card.querySelector('.rm-card-header-main');
       const meta = card.querySelector('.rm-meta-badges');
-      const mood = meta?.querySelector('.rm-mini-mood');
-      if (header && mood) {
-        mood.classList.add('rm-beta-header-mood');
-        header.appendChild(mood);
-        if (meta && !meta.children.length && !meta.textContent.trim()) meta.remove();
-      }
-      return card.outerHTML;
+      card.querySelectorAll('.rm-mini-mood,.rm-beta-header-mood').forEach(node => node.remove());
+      if (meta && !meta.children.length && !meta.textContent.trim()) meta.remove();
+            return card.outerHTML;
     };
 
     wrapped.__rmBetaNoteHeaderRefined = true;
