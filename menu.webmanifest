@@ -10,9 +10,8 @@
   "icons": [
     {
       "src": "./icon-menu.jpeg?v=20260911",
-      "sizes": "1254x1254",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
