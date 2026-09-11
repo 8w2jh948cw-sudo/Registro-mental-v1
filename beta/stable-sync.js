@@ -1,8 +1,8 @@
-/* Registro Mental Beta 1.2.0-beta.14 — base estável sincronizada com a Oficial 1.1.10. */
+/* Registro Mental Beta 1.2.0-beta.15 — base estável sincronizada com a Oficial 1.1.10. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.14';
+  const RELEASE = '1.2.0-beta.15';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const DIAG_KEY = 'registro-beta-last-diagnostic-v1';
   const COLORS = {
