@@ -7,7 +7,7 @@
   window.__RM_MOOD_BAR_V2_STARTED = true;
 
   const IS_BETA = location.pathname.includes('/beta/');
-  const RELEASE = IS_BETA ? '1.2.0-beta.14' : '1.1.10';
+  const RELEASE = IS_BETA ? '1.2.0-beta.14' : '1.2.0';
   const COLORS = {
     0:'#2A223A', 1:'#FF4B4B', 2:'#FF7A1A', 3:'#FF9F0A', 4:'#FFD60A',
     5:'#FFE119', 6:'#BEEA2E', 7:'#57D65A', 8:'#31C46C', 9:'#20D6A3', 10:'#39E6D4'
@@ -121,7 +121,6 @@
   function scoreForRecord(event) {
     if (!event || !valid(event.moodScore)) return null;
     if (valid(event.moodScoreLegacy10)) return clamp(event.moodScoreLegacy10);
-    if (event.moodScaleModel === '0-5') return clamp(Number(event.moodScore) * 2);
     return clamp(event.moodScore);
   }
 

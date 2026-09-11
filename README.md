@@ -4,7 +4,7 @@ Aplicativo web local para diário, medicação, sono, compras e análises pessoa
 
 ## Ambientes publicados
 
-- [App Oficial](https://viniciusnevesdev.github.io/Registro-mental-v1/) — release `1.1.10`, banco `registro-mental-v1`
+- [App Oficial](https://viniciusnevesdev.github.io/Registro-mental-v1/) — release `1.2.0`, banco `registro-mental-v1`
 - [App Beta](https://viniciusnevesdev.github.io/Registro-mental-v1/beta/) — release `1.2.0-beta.14`, banco isolado `registro-mental-beta-v1`
 - [Menu geral](https://viniciusnevesdev.github.io/Registro-mental-v1/menu.html)
 - [Central de diagnóstico](https://viniciusnevesdev.github.io/Registro-mental-v1/diagnostico/)

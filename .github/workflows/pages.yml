@@ -43,16 +43,16 @@ jobs:
           official_manifest = json.loads(Path('manifest.webmanifest').read_text(encoding='utf-8'))
           beta_manifest = json.loads(Path('beta/manifest.webmanifest').read_text(encoding='utf-8'))
 
-          assert environments['official']['release'] == '1.1.10'
+          assert environments['official']['release'] == '1.2.0'
           assert environments['beta']['release'] == '1.2.0-beta.14'
-          assert official['release'] == '1.1.10'
+          assert official['release'] == '1.2.0'
           assert beta['release'] == '1.2.0-beta.14'
-          assert beta['baseline_official'] == '1.1.10'
+          assert beta['baseline_official'] == '1.2.0'
           assert environments['official']['database'] == 'registro-mental-v1'
           assert environments['beta']['database'] == 'registro-mental-beta-v1'
           assert official_manifest['id'] == official_manifest['scope'] == './'
           assert beta_manifest['id'] == beta_manifest['scope'] == './'
-          assert '1.1.10' in official_manifest['start_url']
+          assert '1.2.0' in official_manifest['start_url']
           assert '1.2.0-beta.14' in beta_manifest['start_url']
           PY
 
@@ -64,7 +64,7 @@ jobs:
           const vm = require('node:vm');
 
           for (const [file, release, database] of [
-            ['app.js', '1.1.10', 'registro-mental-v1'],
+            ['app.js', '1.2.0', 'registro-mental-v1'],
             ['beta/app.js', '1.2.0-beta.14', 'registro-mental-beta-v1']
           ]) {
             const source = fs.readFileSync(file, 'utf8');

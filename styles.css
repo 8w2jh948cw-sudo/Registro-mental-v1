@@ -37,3 +37,9 @@ body{font-weight:var(--base-font-weight)}
 .action-card .action-icon{width:48px;height:48px}
 .action-card .action-icon svg{width:calc(42px * var(--icon-size));height:calc(42px * var(--icon-size))}
 
+/* Cabeçalho das janelas: logo abaixo da alça, sem espaço morto. */
+.grabber{margin-bottom:0!important}
+.sheet-header{padding-top:0!important}
+.sheet-close,.sheet-header .sheet-close{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important}
+.sheet-close .rm-close-icon{width:36px!important;height:36px!important}
+.rm-mood-v2-caption{display:none!important}

@@ -27,14 +27,9 @@
       /* Um único design para cartões de registros: Histórico e Mais recentes. */
       .rm-v28-timeline .timeline-main{padding-left:0!important}
 
-      /* Anotações: humor junto ao cabeçalho e conteúdo com alinhamento óptico. */
+      /* Anotações: alinhamento óptico do conteúdo, sem badge de humor. */
       .rm-v28-timeline.rm-type-note .rm-card-header-main{gap:5px!important}
       .rm-v28-timeline.rm-type-note .timeline-main{padding-left:8px!important}
-      .rm-v28-timeline.rm-type-note .rm-card-header-main .rm-official-header-mood{
-        width:22px!important;height:22px!important;min-width:22px!important;
-        border-radius:7px!important;margin-left:4px!important;font-size:12px!important;
-        line-height:1!important;font-weight:850!important;box-shadow:0 0 6px var(--rm-mini-glow)!important
-      }
 
       /* Cadastro de medicamentos: ação única ocupa toda a largura. */
       .registry-toolbar.rm-official-single-action{display:block!important}
@@ -268,14 +263,9 @@
       template.innerHTML = String(html).trim();
       const card = template.content.firstElementChild;
       if (!card) return html;
-      const header = card.querySelector('.rm-card-header-main');
       const meta = card.querySelector('.rm-meta-badges');
-      const mood = meta?.querySelector('.rm-mini-mood');
-      if (header && mood) {
-        mood.classList.add('rm-official-header-mood');
-        header.appendChild(mood);
-        if (meta && !meta.children.length && !meta.textContent.trim()) meta.remove();
-      }
+      meta?.querySelectorAll('.rm-mini-mood,.rm-official-header-mood,.rm-beta-header-mood').forEach(node => node.remove());
+      if (meta && !meta.children.length && !meta.textContent.trim()) meta.remove();
       return card.outerHTML;
     };
     wrapped.__rmOfficialNoteHeaderRefined = true;
