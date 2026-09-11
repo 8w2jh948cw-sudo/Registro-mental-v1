@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.14';
+  const RELEASE = '1.2.0-beta.15';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const DEFAULT_ICON = {
     home: 'home',
