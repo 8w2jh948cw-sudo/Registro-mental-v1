@@ -874,12 +874,13 @@
   requestAnimationFrame(syncSafariChrome);
 })();
 
-/* RM_BETA_APPEARANCE_CONTROLS_V3
-   Mantém somente os modos visuais reais da Beta: Otimizado e Ultra. */
+/* RM_BETA_APPEARANCE_CONTROLS_V4
+   Seletor estático, persistente e estável: somente Otimizado e Ultra. */
 (() => {
   'use strict';
 
   const SETTINGS_KEY = 'registro-beta-settings-v1';
+  const MODES = new Set(['optimized', 'ultra']);
 
   function readSettings() {
     try {
@@ -895,134 +896,170 @@
     } catch (_) {}
   }
 
-  function setMode(mode) {
+  function markup() {
+    return `
+      <div class="setting-separator" data-rm-visual-separator></div>
+      <div class="setting-block rm-beta-visual-setting" id="visualModeSetting">
+        <div class="setting-label"><strong>Efeitos visuais</strong></div>
+        <div class="segmented animated-segmented" id="visualModeControl" role="group" aria-label="Efeitos visuais">
+          <button type="button" data-visual-mode="optimized">Otimizado</button>
+          <button type="button" data-visual-mode="ultra">Ultra</button>
+        </div>
+        <div class="rm-beta-visual-notes" aria-hidden="true">
+          <span class="rm-beta-visual-note" data-note-mode="optimized">Menos efeitos, mais fluidez</span>
+          <span class="rm-beta-visual-note" data-note-mode="ultra">Mais efeitos e profundidade</span>
+        </div>
+      </div>`;
+  }
+
+  function appearanceCard() {
+    const group = [...document.querySelectorAll('.settings-group')].find(item =>
+      /apar[eê]ncia/i.test(item.querySelector(':scope > h2')?.textContent || '')
+    );
+    return group?.querySelector('.settings-card') || null;
+  }
+
+  function ensureControl() {
+    let control = document.getElementById('visualModeControl');
+    if (control) return control;
+    const card = appearanceCard();
+    const themeBlock = document.getElementById('themeControl')?.closest('.setting-block');
+    if (!card || !themeBlock) return null;
+    themeBlock.insertAdjacentHTML('afterend', markup());
+    control = document.getElementById('visualModeControl');
+    return control;
+  }
+
+  function selectedMode() {
+    const mode = readSettings().visualMode;
+    return MODES.has(mode) ? mode : 'optimized';
+  }
+
+  function render(mode = selectedMode()) {
+    const control = ensureControl();
+    if (!control) return;
+    control.querySelector('[data-visual-mode="basic"]')?.remove();
+    control.querySelectorAll('[data-visual-mode]').forEach(button => {
+      const selected = button.dataset.visualMode === mode;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    const notes = control.parentElement?.querySelector('.rm-beta-visual-notes');
+    notes?.querySelectorAll('[data-note-mode]').forEach(note => {
+      note.classList.toggle('is-active', note.dataset.noteMode === mode);
+    });
+  }
+
+  function apply(mode, announce = true) {
     mode = mode === 'ultra' ? 'ultra' : 'optimized';
     const next = { ...readSettings(), visualMode: mode };
     writeSettings(next);
     try {
-      if (typeof rmSetVisualMode === 'function') rmSetVisualMode(mode);
-      else if (typeof rmApplyVisualMode === 'function') rmApplyVisualMode(mode);
-    } catch (_) {}
+      if (typeof rmApplyVisualMode === 'function') rmApplyVisualMode(mode);
+      else document.documentElement.dataset.visualMode = mode;
+      if (typeof rmV25EnsureStyles === 'function') rmV25EnsureStyles();
+    } catch (_) {
+      document.documentElement.dataset.visualMode = mode;
+    }
     document.documentElement.dataset.visualMode = mode;
-    updateSelection(mode);
-  }
-
-  function updateSelection(mode = readSettings().visualMode || 'optimized') {
-    const control = document.getElementById('visualModeControl');
-    control?.querySelectorAll('[data-visual-mode]').forEach(button => {
-      button.classList.toggle('selected', button.dataset.visualMode === mode);
-    });
-  }
-
-  function repairVisualControl(card) {
-    let control = document.getElementById('visualModeControl');
-    if (!control) {
-      const separator = document.createElement('div');
-      separator.className = 'setting-separator';
-      const block = document.createElement('div');
-      block.className = 'setting-block rm-beta-visual-setting';
-      block.id = 'visualModeSetting';
-      block.innerHTML = '<div class="setting-label"><strong>Efeitos visuais</strong><small id="visualModeHelp"></small></div><div class="segmented animated-segmented" id="visualModeControl"><button type="button" data-visual-mode="optimized">Otimizado</button><button type="button" data-visual-mode="ultra">Ultra</button></div>';
-      card.append(separator, block);
-      control = block.querySelector('#visualModeControl');
+    render(mode);
+    if (announce && typeof toast === 'function') {
+      toast(mode === 'optimized' ? 'Visual otimizado ativado.' : 'Visual Ultra ativado.');
     }
+  }
 
-    const basic = control.querySelector('[data-visual-mode="basic"]');
-    basic?.remove();
-
-    const modes = [
-      ['optimized', 'Otimizado'],
-      ['ultra', 'Ultra']
-    ];
-    modes.forEach(([value, label]) => {
-      let button = control.querySelector('[data-visual-mode="' + value + '"]');
-      if (!button) {
-        button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.visualMode = value;
-        control.appendChild(button);
+  function installStyles() {
+    if (document.getElementById('rm-beta-visual-control-v4-style')) return;
+    const style = document.createElement('style');
+    style.id = 'rm-beta-visual-control-v4-style';
+    style.textContent = `
+      #visualModeSetting.rm-beta-visual-setting {
+        padding: 16px 24px 18px !important;
+        text-align: center !important;
       }
-      button.textContent = label;
-    });
-
-    const optimized = control.querySelector('[data-visual-mode="optimized"]');
-    const ultra = control.querySelector('[data-visual-mode="ultra"]');
-    if (optimized) control.appendChild(optimized);
-    if (ultra) control.appendChild(ultra);
-
-    const current = readSettings().visualMode === 'ultra' ? 'ultra' : 'optimized';
-    if (readSettings().visualMode === 'basic') writeSettings({ ...readSettings(), visualMode: 'optimized' });
-
-    control.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-    control.querySelectorAll('[data-visual-mode]').forEach(button => {
-      button.onclick = () => setMode(button.dataset.visualMode);
-    });
-
-    const block = control.closest('.setting-block');
-    if (block) block.classList.add('rm-beta-visual-setting');
-
-    let notes = block?.querySelector('.rm-beta-visual-notes');
-    if (!notes && block) {
-      notes = document.createElement('div');
-      notes.className = 'rm-beta-visual-notes';
-      control.insertAdjacentElement('afterend', notes);
-    }
-    if (notes) {
-      notes.innerHTML = '<span class="rm-beta-visual-note" data-note-mode="optimized">Menos efeitos, mais fluidez</span><span class="rm-beta-visual-note" data-note-mode="ultra">Mais efeitos e profundidade</span>';
-      notes.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-      notes.style.width = '100%';
-      notes.style.boxSizing = 'border-box';
-      notes.style.textAlign = 'center';
-      notes.querySelectorAll('[data-note-mode]').forEach(note => {
-        note.classList.toggle('is-active', note.dataset.noteMode === current);
-      });
-    }
-
-    updateSelection(current);
-  }
-
-  function repairThemeControl(card) {
-    const control = document.getElementById('themeControl');
-    if (!control) return;
-    const values = [['system', 'Sistema'], ['light', 'Claro'], ['dark', 'Escuro']];
-    values.forEach(([value, label]) => {
-      let button = control.querySelector('[data-theme-value="' + value + '"]');
-      if (!button) {
-        button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.themeValue = value;
-        control.appendChild(button);
+      #visualModeSetting .setting-label {
+        display: block !important;
+        margin: 0 0 12px !important;
+        text-align: center !important;
       }
-      button.textContent = label;
-    });
-    control.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+      #visualModeControl {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        width: 100% !important;
+        margin: 0 !important;
+      }
+      #visualModeControl button {
+        min-width: 0 !important;
+        min-height: 38px !important;
+        white-space: nowrap !important;
+      }
+      #visualModeSetting .rm-beta-visual-notes {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        gap: 12px !important;
+        margin: 9px 0 0 !important;
+        padding: 0 4px !important;
+      }
+      #visualModeSetting .rm-beta-visual-note {
+        display: block !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        text-align: center !important;
+        font-size: 11px !important;
+        line-height: 1.28 !important;
+        white-space: normal !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+        hyphens: none !important;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   function install() {
-    const appearance = [...document.querySelectorAll('.settings-group')].find(group =>
-      /apar[eê]ncia/i.test(group.querySelector(':scope > h2')?.textContent || '')
-    );
-    const card = appearance?.querySelector('.settings-card');
-    if (!card) return;
-    repairThemeControl(card);
-    repairVisualControl(card);
+    installStyles();
+    const control = ensureControl();
+    if (!control) return false;
+
+    control.querySelector('[data-visual-mode="basic"]')?.remove();
+    const oldMode = readSettings().visualMode;
+    if (!MODES.has(oldMode)) {
+      writeSettings({ ...readSettings(), visualMode: 'optimized' });
+    }
+    render(selectedMode());
+
+    if (!control.dataset.rmVisualBound) {
+      control.dataset.rmVisualBound = '1';
+      control.addEventListener('click', event => {
+        const button = event.target.closest('[data-visual-mode]');
+        if (button && control.contains(button)) apply(button.dataset.visualMode);
+      });
+    }
+    return true;
   }
 
-  let attempts = 0;
-  const timer = setInterval(() => {
-    attempts += 1;
-    install();
-    if (attempts >= 100) clearInterval(timer);
-  }, 100);
+  function start() {
+    if (!install()) {
+      let attempts = 0;
+      const timer = setInterval(() => {
+        attempts += 1;
+        if (install() || attempts >= 30) clearInterval(timer);
+      }, 100);
+    }
+    apply(selectedMode(), false);
+  }
 
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
   document.addEventListener('registro:release-ready', () => {
     install();
-    setTimeout(install, 150);
-    setTimeout(install, 500);
-    setTimeout(install, 1200);
+    apply(selectedMode(), false);
   });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
-  else install();
 
-  window.REGISTRO_BETA_APPEARANCE_CONTROLS_RELEASE = '1.2.0-beta.17';
+  window.REGISTRO_BETA_APPEARANCE_CONTROLS_RELEASE = '1.2.0-beta.18';
 })();
