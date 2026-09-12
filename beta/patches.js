@@ -380,7 +380,7 @@
 (() => {
   'use strict';
 
-  const CFG = {"current":"official","ownDb":"registro-mental-v1","otherDb":"registro-mental-beta-v1","otherLabel":"Beta","undoId":"__rm_official_last_import_undo_v1__","demoSeedKey":"registro-demo-seeded","bridgeLastKey":"registro-official-last-cross-bridge","lastBackupKey":"registro-beta-last-backup","filePrefix":"Registro-Mental-Oficial_para-Beta","otherUrl":"./beta/","outgoingToken":"from-official","incomingToken":"from-beta"};
+  const CFG = {"current":"beta","ownDb":"registro-mental-beta-v1","otherDb":"registro-mental-v1","otherLabel":"Oficial","undoId":"__rm_beta_last_import_undo_v1__","demoSeedKey":"registro-beta-demo-seeded","bridgeLastKey":"registro-beta-last-cross-bridge","lastBackupKey":"registro-beta-last-backup","filePrefix":"Registro-Mental-Beta_para-Oficial","otherUrl":"../","outgoingToken":"from-beta","incomingToken":"from-official"};
   const BACKUP_FORMAT = 2;
   const KNOWN_EVENT_TYPES = new Set(['note', 'medication', 'sleep', 'purchase']);
   let incomingHandled = false;
