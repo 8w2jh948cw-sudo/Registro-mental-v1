@@ -873,3 +873,213 @@
   else syncSafariChrome();
   requestAnimationFrame(syncSafariChrome);
 })();
+
+
+/* RM_BETA_APPEARANCE_CONTROLS_V2
+   Recoloca os controles de tema e modos visuais na Beta depois da reorganização de Ajustes.
+   A Oficial não recebe este patch. */
+(() => {
+  'use strict';
+
+  const SETTINGS_KEY = 'registro-beta-settings-v1';
+  const RELEASE = '1.2.0-beta.16';
+
+  function readSettings() {
+    try {
+      if (typeof getSettings === 'function') return getSettings() || {};
+      return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    } catch (_) { return {}; }
+  }
+
+  function writeSettings(next) {
+    try {
+      if (typeof saveSettings === 'function') saveSettings(next);
+      else localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+    } catch (_) {}
+  }
+
+  function setTheme(theme) {
+    const next = { ...readSettings(), theme };
+    writeSettings(next);
+    try {
+      if (typeof applySettings === 'function') applySettings(next);
+      else {
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme === 'system' ? 'light dark' : theme;
+      }
+    } catch (_) {}
+    document.documentElement.dataset.theme = theme;
+    document.querySelectorAll('#themeControl [data-theme-value]').forEach(button => {
+      button.classList.toggle('selected', button.dataset.themeValue === theme);
+    });
+  }
+
+  function ensureThemeControl(card) {
+    let control = document.getElementById('themeControl');
+    if (!control) {
+      const block = document.createElement('div');
+      block.className = 'setting-block rm-beta-restored-theme';
+      block.innerHTML = '<div class="setting-label"><strong>Tema</strong><small>Claro, escuro ou seguindo o iPhone</small></div><div class="segmented animated-segmented" id="themeControl"><button type="button" data-theme-value="system">Sistema</button><button type="button" data-theme-value="light">Claro</button><button type="button" data-theme-value="dark">Escuro</button></div>';
+      card.prepend(block);
+      control = block.querySelector('#themeControl');
+    } else {
+      const block = control.closest('.setting-block');
+      if (block && block.parentElement !== card) {
+        const separator = document.createElement('div');
+        separator.className = 'setting-separator';
+        card.prepend(separator);
+        card.prepend(block);
+      }
+      const values = [
+        ['system', 'Sistema'],
+        ['light', 'Claro'],
+        ['dark', 'Escuro']
+      ];
+      values.forEach(([value, label]) => {
+        if (!control.querySelector('[data-theme-value="' + value + '"]')) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.themeValue = value;
+          button.textContent = label;
+          control.appendChild(button);
+        }
+      });
+    }
+    const current = readSettings().theme || 'system';
+    control.querySelectorAll('[data-theme-value]').forEach(button => {
+      button.onclick = () => setTheme(button.dataset.themeValue);
+      button.classList.toggle('selected', button.dataset.themeValue === current);
+    });
+  }
+
+  function ensureBasicStyle() {
+    if (document.getElementById('rm-beta-basic-mode-style')) return;
+    const style = document.createElement('style');
+    style.id = 'rm-beta-basic-mode-style';
+    style.textContent = `
+      html[data-visual-mode="basic"] body { background: var(--bg, #f5f5f7) !important; background-image: none !important; }
+      html[data-theme="dark"][data-visual-mode="basic"] body { background: #000 !important; background-image: none !important; }
+      html[data-visual-mode="basic"] .summary-card,
+      html[data-visual-mode="basic"] .analysis-card,
+      html[data-visual-mode="basic"] .notice-card,
+      html[data-visual-mode="basic"] .settings-card,
+      html[data-visual-mode="basic"] .action-card,
+      html[data-visual-mode="basic"] .timeline-item,
+      html[data-visual-mode="basic"] .empty-state,
+      html[data-visual-mode="basic"] .sheet,
+      html[data-visual-mode="basic"] .tab-bar {
+        background-image: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: 0 1px 5px rgba(0,0,0,.08) !important;
+      }
+      html[data-theme="dark"][data-visual-mode="basic"] .summary-card,
+      html[data-theme="dark"][data-visual-mode="basic"] .analysis-card,
+      html[data-theme="dark"][data-visual-mode="basic"] .notice-card,
+      html[data-theme="dark"][data-visual-mode="basic"] .settings-card,
+      html[data-theme="dark"][data-visual-mode="basic"] .action-card,
+      html[data-theme="dark"][data-visual-mode="basic"] .timeline-item,
+      html[data-theme="dark"][data-visual-mode="basic"] .empty-state,
+      html[data-theme="dark"][data-visual-mode="basic"] .sheet,
+      html[data-theme="dark"][data-visual-mode="basic"] .tab-bar {
+        box-shadow: 0 1px 5px rgba(0,0,0,.35) !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function applyVisualMode(mode) {
+    mode = ['basic', 'optimized', 'ultra'].includes(mode) ? mode : 'optimized';
+    const next = { ...readSettings(), visualMode: mode };
+    writeSettings(next);
+    document.documentElement.dataset.visualMode = mode;
+    ensureBasicStyle();
+    try {
+      if (mode === 'optimized' || mode === 'ultra') {
+        if (typeof rmApplyVisualMode === 'function') rmApplyVisualMode(mode);
+        if (typeof rmV25EnsureStyles === 'function') rmV25EnsureStyles();
+      }
+    } catch (_) {}
+    const control = document.getElementById('visualModeControl');
+    control?.querySelectorAll('[data-visual-mode]').forEach(button => {
+      button.classList.toggle('selected', button.dataset.visualMode === mode);
+    });
+    const help = document.getElementById('visualModeHelp');
+    if (help) help.textContent = mode === 'basic'
+      ? 'Interface simples, com o mínimo de efeitos visuais.'
+      : mode === 'optimized'
+        ? 'Menos efeitos, mais fluidez.'
+        : 'Todos os efeitos visuais e acabamento completo.';
+  }
+
+  function ensureVisualControl(card) {
+    let control = document.getElementById('visualModeControl');
+    if (!control) {
+      const separator = document.createElement('div');
+      separator.className = 'setting-separator';
+      const block = document.createElement('div');
+      block.className = 'setting-block rm-beta-visual-setting';
+      block.id = 'visualModeSetting';
+      block.innerHTML = '<div class="setting-label"><strong>Efeitos visuais</strong><small id="visualModeHelp"></small></div><div class="segmented animated-segmented" id="visualModeControl"><button type="button" data-visual-mode="basic">Básico</button><button type="button" data-visual-mode="optimized">Otimizado</button><button type="button" data-visual-mode="ultra">Ultra</button></div>';
+      card.append(separator, block);
+      control = block.querySelector('#visualModeControl');
+    } else {
+      const block = control.closest('.setting-block');
+      if (block && block.parentElement !== card) {
+        const separator = document.createElement('div');
+        separator.className = 'setting-separator';
+        card.append(separator, block);
+      }
+      const values = [
+        ['basic', 'Básico'],
+        ['optimized', 'Otimizado'],
+        ['ultra', 'Ultra']
+      ];
+      values.forEach(([value, label]) => {
+        let button = control.querySelector('[data-visual-mode="' + value + '"]');
+        if (!button) {
+          button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.visualMode = value;
+          control.appendChild(button);
+        }
+        button.textContent = label;
+      });
+      const help = document.getElementById('visualModeHelp');
+      if (help) help.textContent = '';
+    }
+
+    control.querySelectorAll('[data-visual-mode]').forEach(button => {
+      button.onclick = () => applyVisualMode(button.dataset.visualMode);
+    });
+    applyVisualMode(readSettings().visualMode || document.documentElement.dataset.visualMode || 'optimized');
+  }
+
+  function install() {
+    const appearance = [...document.querySelectorAll('.settings-group')].find(group =>
+      /apar[eê]ncia/i.test(group.querySelector(':scope > h2')?.textContent || '')
+    );
+    const card = appearance?.querySelector('.settings-card');
+    if (!card) return false;
+    ensureThemeControl(card);
+    ensureVisualControl(card);
+    return true;
+  }
+
+  let attempts = 0;
+  const timer = setInterval(() => {
+    attempts += 1;
+    install();
+    if (attempts >= 80) clearInterval(timer);
+  }, 100);
+  document.addEventListener('registro:release-ready', () => {
+    install();
+    setTimeout(install, 150);
+    setTimeout(install, 500);
+    setTimeout(install, 1200);
+  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
+  else install();
+
+  window.REGISTRO_BETA_APPEARANCE_CONTROLS_RELEASE = RELEASE;
+})();
