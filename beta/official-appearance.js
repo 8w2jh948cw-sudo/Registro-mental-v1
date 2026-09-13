@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.22 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.23 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.22';
+  const RELEASE = '1.2.0-beta.23';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -110,7 +110,16 @@
       html[data-theme="dark"] .tab-item.selected{color:#F2F2F4!important}
       @media(prefers-color-scheme:dark){html[data-theme="system"] .tab-item.selected{color:#F2F2F4!important}}
 
-      #historyFilters.filter-scroll{overflow-x:auto!important;overflow-y:visible!important;padding-top:8px!important;padding-bottom:10px!important;margin-top:-8px!important;margin-bottom:-10px!important;scroll-padding-inline:4px}
+      #historyFilters.filter-scroll{
+        /* Espaço interno para o halo: as margens compensam a altura e não deslocam a página. */
+        overflow-x:auto!important;
+        overflow-y:hidden!important;
+        padding-top:42px!important;
+        padding-bottom:42px!important;
+        margin-top:-42px!important;
+        margin-bottom:-42px!important;
+        scroll-padding-inline:4px
+      }
       #historyFilters .filter-chip{position:relative!important}
 
       #homeTimeline .timeline-item{grid-template-columns:68px minmax(0,1fr) 28px}
@@ -248,7 +257,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.22&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.23&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
