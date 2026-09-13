@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.33 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.34 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.33';
+  const RELEASE = '1.2.0-beta.34';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -291,7 +291,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.33&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.34&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
@@ -312,4 +312,57 @@
       filter.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
     });
   }, { passive: true });
+})();
+
+
+/* Correção de contraste: no claro, tinta quase branca vira preta sem afetar superfícies. */
+(() => {
+  if (window.__RM_LIGHT_INK_CONTRAST__) return;
+  window.__RM_LIGHT_INK_CONTRAST__ = true;
+  const ROOT_ATTR = 'data-rm-light-ink-active';
+  const MARK_ATTR = 'data-rm-light-ink-fix';
+  const protectedSelector = [
+    '.primary-button','.full-button','.filter-chip.selected','.mood-score.selected',
+    '.sleep-quality button.selected','.emotion-scale button.selected','[aria-pressed="true"]',
+    '.kind-note','.kind-medication','.kind-sleep','.kind-purchase',
+    '.rm-purchase-price','.rm-purchase-place-icon','[data-icon]'
+  ].join(',');
+  const rgb = value => {
+    const match = String(value || '').match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/i);
+    return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+  };
+  const isNearlyWhiteGray = value => {
+    const color = rgb(value);
+    return Boolean(color) && Math.min(...color) >= 205 && Math.max(...color) - Math.min(...color) <= 28;
+  };
+  const isLight = () => {
+    const theme = document.documentElement.dataset.theme || 'system';
+    return theme === 'light' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
+  };
+  let scheduled = false;
+  const apply = () => {
+    scheduled = false;
+    const html = document.documentElement;
+    html.toggleAttribute(ROOT_ATTR, isLight());
+    if (!isLight()) return;
+    document.querySelectorAll('body *').forEach(element => {
+      if (element.hasAttribute(MARK_ATTR) || element.closest(protectedSelector)) return;
+      if (isNearlyWhiteGray(getComputedStyle(element).color)) element.setAttribute(MARK_ATTR, '');
+    });
+  };
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(apply);
+  };
+  const observer = new MutationObserver(schedule);
+  observer.observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+  const begin = () => {
+    observer.observe(document.body, { childList:true, subtree:true });
+    schedule();
+  };
+  if (document.body) begin(); else document.addEventListener('DOMContentLoaded', begin, { once:true });
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', schedule);
+  window.addEventListener('registro:release-ready', schedule);
+  [250, 900, 1800].forEach(ms => setTimeout(schedule, ms));
 })();
