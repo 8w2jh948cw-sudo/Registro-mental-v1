@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.28 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.29 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.28';
+  const RELEASE = '1.2.0-beta.29';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -170,6 +170,7 @@
       .rm-purchase-quantity,.rm-purchase-separator{flex:0 0 auto;white-space:nowrap}
       .rm-purchase-place{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .rm-purchase-place-icon{width:16px;height:16px;display:inline-grid;place-items:center;flex:0 0 16px;color:currentColor}
+      .rm-v28-timeline.rm-type-purchase .rm-purchase-place-icon{color:var(--rm-record-tone,var(--record-buy,var(--buy)))!important}
       .rm-purchase-place-svg{display:block;width:16px;height:16px;fill:currentColor}
 
       /* Nunca esconder html/body por atributos de aparência. */
@@ -275,7 +276,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.28&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.29&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
