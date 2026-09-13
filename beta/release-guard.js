@@ -1,2 +1,2 @@
-/* Registro Mental release 1.2.0-beta.34 */
-window.REGISTRO_AVAILABLE_RELEASE='1.2.0-beta.34';
+/* Registro Mental release 1.2.0-beta.35 */
+window.REGISTRO_AVAILABLE_RELEASE='1.2.0-beta.35';
