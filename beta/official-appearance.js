@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.27 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.28 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.27';
+  const RELEASE = '1.2.0-beta.28';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -166,9 +166,11 @@
       }
 
       /* Local de compra: ícone da loja à esquerda, com a mesma cor adaptativa do texto. */
-      .rm-purchase-place{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline}
-      .rm-purchase-place-icon{width:15px;height:15px;display:inline-grid;place-items:center;flex:0 0 auto;color:currentColor}
-      .rm-purchase-place-svg{display:block;width:15px;height:15px;fill:currentColor}
+      .rm-purchase-meta{display:flex!important;align-items:center;gap:7px;min-width:0;flex-wrap:nowrap}
+      .rm-purchase-quantity,.rm-purchase-separator{flex:0 0 auto;white-space:nowrap}
+      .rm-purchase-place{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .rm-purchase-place-icon{width:16px;height:16px;display:inline-grid;place-items:center;flex:0 0 16px;color:currentColor}
+      .rm-purchase-place-svg{display:block;width:16px;height:16px;fill:currentColor}
 
       /* Nunca esconder html/body por atributos de aparência. */
       #accentControl,.accent-options,#semanticPaletteControl,
@@ -273,7 +275,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.27&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.28&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
