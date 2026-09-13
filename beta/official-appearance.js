@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.34 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.35 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.34';
+  const RELEASE = '1.2.0-beta.35';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -291,7 +291,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.34&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.35&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
@@ -321,6 +321,10 @@
   window.__RM_LIGHT_INK_CONTRAST__ = true;
   const ROOT_ATTR = 'data-rm-light-ink-active';
   const MARK_ATTR = 'data-rm-light-ink-fix';
+  const contrastStyle = document.createElement('style');
+  contrastStyle.id = 'rm-light-ink-contrast-style';
+  contrastStyle.textContent = `html[data-rm-light-ink-active] [data-rm-light-ink-fix]{color:#000!important}html[data-rm-light-ink-active] svg[data-rm-light-ink-fix],html[data-rm-light-ink-active] path[data-rm-light-ink-fix],html[data-rm-light-ink-active] use[data-rm-light-ink-fix]{fill:#000!important;stroke:#000!important}`;
+  document.head.appendChild(contrastStyle);
   const protectedSelector = [
     '.primary-button','.full-button','.filter-chip.selected','.mood-score.selected',
     '.sleep-quality button.selected','.emotion-scale button.selected','[aria-pressed="true"]',
@@ -347,7 +351,10 @@
     if (!isLight()) return;
     document.querySelectorAll('body *').forEach(element => {
       if (element.hasAttribute(MARK_ATTR) || element.closest(protectedSelector)) return;
-      if (isNearlyWhiteGray(getComputedStyle(element).color)) element.setAttribute(MARK_ATTR, '');
+      const computed = getComputedStyle(element);
+      if (isNearlyWhiteGray(computed.color) || (element instanceof SVGElement && isNearlyWhiteGray(computed.fill))) {
+        element.setAttribute(MARK_ATTR, '');
+      }
     });
   };
   const schedule = () => {
