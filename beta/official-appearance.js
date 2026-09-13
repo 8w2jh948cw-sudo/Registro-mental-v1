@@ -117,6 +117,11 @@
       #homeTimeline .rm-home-recent-day{display:block;color:var(--secondary);font-size:10px;font-weight:750;line-height:1.15;white-space:nowrap}
       #homeTimeline .rm-home-recent-hour{display:block;margin-top:3px;color:var(--secondary);font-size:11px;line-height:1.15;font-variant-numeric:tabular-nums}
 
+      /* Fundo único: todas as telas usam exatamente o mesmo fundo da tela Início. */
+      html,body,.app-shell,#content,.content,.view,.view.active{
+        background:var(--bg)!important;
+      }
+
       /* Nunca esconder html/body por atributos de aparência. */
       #accentControl,.accent-options,#semanticPaletteControl,
       button[data-accent],button[data-semantic-palette],
