@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.32 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.33 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.32';
+  const RELEASE = '1.2.0-beta.33';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -176,6 +176,18 @@
       /* Valor pago de compras: verde consistente em todos os temas. */
       .rm-v28-timeline.rm-type-purchase .rm-purchase-price{color:#4AD968!important}
 
+      /* Tema claro: dados principais dos cartões com contraste máximo. */
+      html[data-theme="light"] .rm-v28-timeline .timeline-title,
+      html[data-theme="light"] .rm-v28-timeline .rm-record-name,
+      html[data-theme="light"] .rm-v28-timeline .rm-record-subline:not(.rm-purchase-price),
+      html[data-theme="light"] .rm-v28-timeline .timeline-time{color:#000!important}
+      @media(prefers-color-scheme:light){
+        html[data-theme="system"] .rm-v28-timeline .timeline-title,
+        html[data-theme="system"] .rm-v28-timeline .rm-record-name,
+        html[data-theme="system"] .rm-v28-timeline .rm-record-subline:not(.rm-purchase-price),
+        html[data-theme="system"] .rm-v28-timeline .timeline-time{color:#000!important}
+      }
+
       /* Nunca esconder html/body por atributos de aparência. */
       #accentControl,.accent-options,#semanticPaletteControl,
       button[data-accent],button[data-semantic-palette],
@@ -279,7 +291,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.32&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.33&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
