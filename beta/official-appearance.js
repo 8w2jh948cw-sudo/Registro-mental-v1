@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.21 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.22 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.21';
+  const RELEASE = '1.2.0-beta.22';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -131,10 +131,18 @@
       #historyFilters .filter-chip[data-filter="medication"]{--rm-filter-tone:var(--record-med)}
       #historyFilters .filter-chip[data-filter="sleep"]{--rm-filter-tone:var(--record-sleep)}
       #historyFilters .filter-chip[data-filter="purchase"]{--rm-filter-tone:var(--record-buy)}
+      /* Ícone e texto usam sempre a mesma cor, inclusive nos temas claro e escuro. */
+      #historyFilters .rm-filter-icon,
+      #historyFilters .rm-filter-icon svg{
+        color:inherit!important;
+      }
       html[data-visual-mode="ultra"] #historyFilters .filter-chip.selected{
         background:var(--rm-filter-tone,var(--accent))!important;
         color:#fff!important;
-        box-shadow:0 0 0 1px color-mix(in srgb,var(--rm-filter-tone,var(--accent)) 70%,transparent),0 0 14px color-mix(in srgb,var(--rm-filter-tone,var(--accent)) 58%,transparent)!important;
+        box-shadow:
+          0 0 0 1.5px color-mix(in srgb,var(--rm-filter-tone,var(--accent)) 88%,transparent),
+          0 0 14px 1px color-mix(in srgb,var(--rm-filter-tone,var(--accent)) 82%,transparent),
+          0 0 30px 5px color-mix(in srgb,var(--rm-filter-tone,var(--accent)) 58%,transparent)!important;
       }
 
       /* Nunca esconder html/body por atributos de aparência. */
@@ -240,7 +248,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.21&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.22&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
