@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.35 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.36 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.35';
+  const RELEASE = '1.2.0-beta.36';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -291,7 +291,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.35&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.36&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
@@ -315,24 +315,20 @@
 })();
 
 
-/* Correção de contraste: no claro, tinta quase branca vira preta sem afetar superfícies. */
+/* Correção de contraste prioritária: tinta quase branca vira preto puro no tema claro. */
 (() => {
   if (window.__RM_LIGHT_INK_CONTRAST__) return;
   window.__RM_LIGHT_INK_CONTRAST__ = true;
-  const ROOT_ATTR = 'data-rm-light-ink-active';
   const MARK_ATTR = 'data-rm-light-ink-fix';
-  const contrastStyle = document.createElement('style');
-  contrastStyle.id = 'rm-light-ink-contrast-style';
-  contrastStyle.textContent = `html[data-rm-light-ink-active] [data-rm-light-ink-fix]{color:#000!important}html[data-rm-light-ink-active] svg[data-rm-light-ink-fix],html[data-rm-light-ink-active] path[data-rm-light-ink-fix],html[data-rm-light-ink-active] use[data-rm-light-ink-fix]{fill:#000!important;stroke:#000!important}`;
-  document.head.appendChild(contrastStyle);
+  const originals = new WeakMap();
   const protectedSelector = [
     '.primary-button','.full-button','.filter-chip.selected','.mood-score.selected',
     '.sleep-quality button.selected','.emotion-scale button.selected','[aria-pressed="true"]',
     '.kind-note','.kind-medication','.kind-sleep','.kind-purchase',
-    '.rm-purchase-price','.rm-purchase-place-icon','[data-icon]'
+    '.rm-purchase-price','.rm-purchase-place-icon'
   ].join(',');
   const rgb = value => {
-    const match = String(value || '').match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/i);
+    const match = String(value || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
     return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
   };
   const isNearlyWhiteGray = value => {
@@ -343,17 +339,45 @@
     const theme = document.documentElement.dataset.theme || 'system';
     return theme === 'light' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
   };
+  const saveOriginal = element => {
+    if (originals.has(element)) return;
+    originals.set(element, {
+      color:[element.style.getPropertyValue('color'),element.style.getPropertyPriority('color')],
+      fill:[element.style.getPropertyValue('fill'),element.style.getPropertyPriority('fill')],
+      stroke:[element.style.getPropertyValue('stroke'),element.style.getPropertyPriority('stroke')]
+    });
+  };
+  const restore = element => {
+    const saved = originals.get(element);
+    if (!saved) return;
+    for (const [property,[value,priority]] of Object.entries(saved)) {
+      if (value) element.style.setProperty(property,value,priority);
+      else element.style.removeProperty(property);
+    }
+    element.removeAttribute(MARK_ATTR);
+    originals.delete(element);
+  };
+  const enforceBlack = element => {
+    saveOriginal(element);
+    element.setAttribute(MARK_ATTR,'');
+    element.style.setProperty('color','#000','important');
+    if (element instanceof SVGElement) {
+      element.style.setProperty('fill','#000','important');
+      element.style.setProperty('stroke','#000','important');
+    }
+  };
   let scheduled = false;
   const apply = () => {
     scheduled = false;
-    const html = document.documentElement;
-    html.toggleAttribute(ROOT_ATTR, isLight());
-    if (!isLight()) return;
+    if (!isLight()) {
+      document.querySelectorAll('[' + MARK_ATTR + ']').forEach(restore);
+      return;
+    }
     document.querySelectorAll('body *').forEach(element => {
-      if (element.hasAttribute(MARK_ATTR) || element.closest(protectedSelector)) return;
+      if (element.closest(protectedSelector)) return;
       const computed = getComputedStyle(element);
-      if (isNearlyWhiteGray(computed.color) || (element instanceof SVGElement && isNearlyWhiteGray(computed.fill))) {
-        element.setAttribute(MARK_ATTR, '');
+      if (element.hasAttribute(MARK_ATTR) || isNearlyWhiteGray(computed.color) || (element instanceof SVGElement && isNearlyWhiteGray(computed.fill))) {
+        enforceBlack(element);
       }
     });
   };
@@ -363,13 +387,13 @@
     requestAnimationFrame(apply);
   };
   const observer = new MutationObserver(schedule);
-  observer.observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+  observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   const begin = () => {
-    observer.observe(document.body, { childList:true, subtree:true });
+    observer.observe(document.body,{childList:true,subtree:true});
     schedule();
   };
-  if (document.body) begin(); else document.addEventListener('DOMContentLoaded', begin, { once:true });
-  window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', schedule);
-  window.addEventListener('registro:release-ready', schedule);
-  [250, 900, 1800].forEach(ms => setTimeout(schedule, ms));
+  if (document.body) begin(); else document.addEventListener('DOMContentLoaded',begin,{once:true});
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',schedule);
+  window.addEventListener('registro:release-ready',schedule);
+  [0,250,900,1800,3200].forEach(ms => setTimeout(schedule,ms));
 })();
