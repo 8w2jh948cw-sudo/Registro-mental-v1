@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.36 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.37 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.36';
+  const RELEASE = '1.2.0-beta.37';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -140,6 +140,17 @@
       #historyFilters .filter-chip[data-filter="medication"]{--rm-filter-tone:var(--record-med)}
       #historyFilters .filter-chip[data-filter="sleep"]{--rm-filter-tone:var(--record-sleep)}
       #historyFilters .filter-chip[data-filter="purchase"]{--rm-filter-tone:var(--record-buy)}
+      /* Filtros: área não selecionada usa sua cor; área selecionada fica preenchida e branca. */
+      #historyFilters .filter-chip:not(.selected){
+        color:var(--rm-filter-tone,var(--accent))!important;
+        border-color:color-mix(in srgb,var(--rm-filter-tone,var(--accent)) 34%,var(--separator))!important;
+      }
+      #historyFilters .filter-chip.selected{
+        background:var(--rm-filter-tone,var(--accent))!important;
+        color:#fff!important;
+        border-color:color-mix(in srgb,var(--rm-filter-tone,var(--accent)) 78%,transparent)!important;
+      }
+
       /* Ícone e texto usam sempre a mesma cor, inclusive nos temas claro e escuro. */
       #historyFilters .rm-filter-icon,
       #historyFilters .rm-filter-icon svg{
@@ -291,7 +302,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.36&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.37&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
