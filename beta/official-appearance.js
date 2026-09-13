@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.37 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.38 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.37';
+  const RELEASE = '1.2.0-beta.38';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -302,7 +302,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.37&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.38&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
@@ -407,4 +407,114 @@
   window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',schedule);
   window.addEventListener('registro:release-ready',schedule);
   [0,250,900,1800,3200].forEach(ms => setTimeout(schedule,ms));
+})();
+
+
+/* Beta 38: superfícies utilitárias usam a mesma linguagem dos cartões de Análise atual. */
+(() => {
+  if (window.__RM_REFERENCE_CARD_FAMILY__) return;
+  window.__RM_REFERENCE_CARD_FAMILY__ = true;
+
+  const typeIcon = { text:'note', mood:'spark', purchase:'bag', medication:'pill', sleep:'moon' };
+  const decorate = root => {
+    (root || document).querySelectorAll?.('.continuity-alert-row[data-gap-action]').forEach(row => {
+      row.classList.add('rm-reference-surface');
+      if (!row.querySelector(':scope > .rm-continuity-row-icon')) {
+        const icon = document.createElement('span');
+        icon.className = 'rm-continuity-row-icon';
+        icon.dataset.icon = typeIcon[row.dataset.gapAction] || 'clock';
+        icon.setAttribute('aria-hidden','true');
+        row.insertBefore(icon, row.firstElementChild);
+      }
+    });
+    (root || document).querySelectorAll?.('.learning-context,.dose-result,.med-suggestion-card,.rm-health-source-card').forEach(card => {
+      card.classList.add('rm-reference-surface');
+    });
+    if (typeof window.hydrateIcons === 'function') window.hydrateIcons(root || document);
+  };
+
+  const style = document.createElement('style');
+  style.id = 'rm-reference-card-family-style';
+  style.textContent = `
+    .continuity-alert{
+      --rm-reference-tone:var(--accent);
+      position:relative;isolation:isolate;overflow:visible!important;
+      padding:16px!important;margin:14px 0!important;
+      border:1px solid color-mix(in srgb,var(--rm-reference-tone) 34%,var(--separator))!important;
+      background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 92%,var(--rm-reference-tone) 8%),var(--surface))!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 24px color-mix(in srgb,var(--rm-reference-tone) 9%,transparent)!important;
+    }
+    .continuity-alert::before{
+      content:'';position:absolute;z-index:-1;pointer-events:none;inset:18% auto auto 7%;
+      width:48%;height:38%;border-radius:999px;
+      background:radial-gradient(ellipse,color-mix(in srgb,var(--rm-reference-tone) 16%,transparent),transparent 70%);
+      filter:blur(18px);
+    }
+    .continuity-alert .notice-icon,.continuity-alert .section-kicker{color:var(--rm-reference-tone)!important}
+    .continuity-alert h2{color:var(--text)!important}
+    .continuity-disclaimer{color:var(--secondary)!important;opacity:1!important;margin:9px 0 14px!important}
+    .continuity-alert-list{gap:10px!important}
+    .rm-reference-surface,.continuity-alert-row{
+      --rm-reference-tone:var(--accent);
+      position:relative;isolation:isolate;
+      background:linear-gradient(145deg,color-mix(in srgb,var(--surface-2) 90%,var(--rm-reference-tone) 10%),var(--surface-2))!important;
+      border:1px solid color-mix(in srgb,var(--rm-reference-tone) 31%,var(--separator))!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 7px 16px color-mix(in srgb,var(--rm-reference-tone) 7%,transparent)!important;
+      border-radius:20px!important;color:var(--text)!important;
+    }
+    .continuity-alert-row[data-gap-action="text"],.continuity-alert-row[data-gap-action="mood"]{--rm-reference-tone:var(--record-note,var(--accent))}
+    .continuity-alert-row[data-gap-action="medication"],.dose-result,.med-suggestion-card{--rm-reference-tone:var(--record-med,var(--med))}
+    .continuity-alert-row[data-gap-action="sleep"],.rm-health-source-card{--rm-reference-tone:var(--record-sleep,var(--sleep))}
+    .continuity-alert-row[data-gap-action="purchase"]{--rm-reference-tone:var(--record-buy,var(--buy))}
+    .learning-context{--rm-reference-tone:var(--accent)}
+    .continuity-alert-row{
+      display:grid!important;grid-template-columns:38px minmax(0,1fr) auto;align-items:center!important;
+      min-height:72px;padding:11px 12px!important;gap:11px!important;text-decoration:none;
+    }
+    .rm-continuity-row-icon{
+      width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
+      color:var(--rm-reference-tone)!important;
+      background:color-mix(in srgb,var(--rm-reference-tone) 13%,transparent);
+      box-shadow:0 0 14px color-mix(in srgb,var(--rm-reference-tone) 18%,transparent);
+    }
+    .rm-continuity-row-icon .svg-icon,.rm-continuity-row-icon svg{width:20px!important;height:20px!important}
+    .continuity-alert-row>span:first-of-type{min-width:0;gap:3px!important}
+    .continuity-alert-row strong{font-size:14px!important;color:var(--text)!important}
+    .continuity-alert-row small{color:var(--secondary)!important;opacity:1!important}
+    .continuity-alert-row>span:last-child{
+      color:var(--rm-reference-tone)!important;font-size:13px;font-weight:750;white-space:nowrap;
+      padding:7px 9px;border-radius:11px;
+      background:color-mix(in srgb,var(--rm-reference-tone) 11%,transparent);
+      border:1px solid color-mix(in srgb,var(--rm-reference-tone) 19%,transparent);
+    }
+    .continuity-alert-row:active{transform:scale(.985)}
+    .learning-context{padding:12px 13px!important}
+    .learning-context small{color:var(--rm-reference-tone)!important;opacity:1!important}
+    .learning-context p{color:var(--text)!important}
+    .dose-result{padding:12px 13px!important}
+    .dose-result span{color:var(--secondary)!important}.dose-result strong{color:var(--rm-reference-tone)!important}
+    .med-suggestion-card{padding:12px!important}
+    .med-suggestion-card .mini-icon,.med-suggestion-card .svg-icon{color:var(--rm-reference-tone)!important}
+    .rm-health-source-card{padding:13px 14px!important}
+    html[data-visual-mode="ultra"] .rm-reference-surface,html[data-visual-mode="ultra"] .continuity-alert-row{
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 18px color-mix(in srgb,var(--rm-reference-tone) 15%,transparent),0 9px 20px color-mix(in srgb,var(--rm-reference-tone) 10%,transparent)!important;
+    }
+    html[data-visual-mode="optimized"] .rm-reference-surface,html[data-visual-mode="optimized"] .continuity-alert-row{
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 10px color-mix(in srgb,var(--rm-reference-tone) 6%,transparent)!important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const observe = () => {
+    decorate(document);
+    const observer = new MutationObserver(records => {
+      for (const record of records) for (const node of record.addedNodes) {
+        if (node.nodeType === 1) decorate(node);
+      }
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
+  };
+  if (document.body) observe(); else document.addEventListener('DOMContentLoaded',observe,{once:true});
+  window.addEventListener('registro:release-ready',() => decorate(document));
+  [150,700,1800,3600].forEach(ms => setTimeout(() => decorate(document),ms));
 })();
