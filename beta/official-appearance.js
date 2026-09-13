@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.29 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.30 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.29';
+  const RELEASE = '1.2.0-beta.30';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -173,6 +173,10 @@
       .rm-v28-timeline.rm-type-purchase .rm-purchase-place-icon{color:var(--rm-record-tone,var(--record-buy,var(--buy)))!important}
       .rm-purchase-place-svg{display:block;width:16px;height:16px;fill:currentColor}
 
+      /* Valor pago de compras: verde específico no modo escuro. */
+      html[data-theme="dark"] .rm-v28-timeline.rm-type-purchase .rm-purchase-price{color:#008932!important}
+      @media(prefers-color-scheme:dark){html[data-theme="system"] .rm-v28-timeline.rm-type-purchase .rm-purchase-price{color:#008932!important}}
+
       /* Nunca esconder html/body por atributos de aparência. */
       #accentControl,.accent-options,#semanticPaletteControl,
       button[data-accent],button[data-semantic-palette],
@@ -276,7 +280,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.29&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.30&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
