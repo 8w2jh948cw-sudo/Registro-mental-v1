@@ -1,4 +1,4 @@
-/* Registro Mental Oficial 1.2.0-beta.19 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.20 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
