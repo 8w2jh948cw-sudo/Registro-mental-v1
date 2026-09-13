@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.25 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.26 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.25';
+  const RELEASE = '1.2.0-beta.26';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -268,11 +268,25 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.25&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.26&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
   } catch (error) {
     console.warn('Registro Oficial: integração emocional não bloqueante', error);
   }
+})();
+
+
+/* Mantém o filtro selecionado longe da lateral reservada ao indicador de rolagem do iOS. */
+(() => {
+  if (window.__RM_HISTORY_FILTER_VISIBILITY__) return;
+  window.__RM_HISTORY_FILTER_VISIBILITY__ = true;
+  document.addEventListener('click', event => {
+    const filter = event.target.closest('#historyFilters [data-filter]');
+    if (!filter) return;
+    requestAnimationFrame(() => {
+      filter.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    });
+  }, { passive: true });
 })();
