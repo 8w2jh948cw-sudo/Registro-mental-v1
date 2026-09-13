@@ -1,8 +1,8 @@
-/* Registro Mental Oficial 1.2.0-beta.38 — aparência segura, paleta fixa e últimos registros. */
+/* Registro Mental Oficial 1.2.0-beta.39 — aparência segura, paleta fixa e últimos registros. */
 (() => {
   'use strict';
 
-  const RELEASE = '1.2.0-beta.38';
+  const RELEASE = '1.2.0-beta.39';
   const SETTINGS_KEY = 'registro-beta-settings-v1';
   const COLORS = {
     accent: '#7259D6',
@@ -302,7 +302,7 @@
     if (document.querySelector('script[data-rm-mood-v2]')) return;
     const script = document.createElement('script');
     script.dataset.rmMoodV2 = '1';
-    script.src = `./mood-bar-v2.js?v=1.2.0-beta.38&load=${Date.now()}`;
+    script.src = `./mood-bar-v2.js?v=1.2.0-beta.39&load=${Date.now()}`;
     script.async = true;
     script.onerror = () => console.warn('Registro Oficial: barra emocional 0–10 não carregou; interface estável mantida.');
     document.head.appendChild(script);
@@ -517,4 +517,42 @@
   if (document.body) observe(); else document.addEventListener('DOMContentLoaded',observe,{once:true});
   window.addEventListener('registro:release-ready',() => decorate(document));
   [150,700,1800,3600].forEach(ms => setTimeout(() => decorate(document),ms));
+})();
+
+
+/* Beta 39: composição compacta e legível dos itens de continuidade. */
+(() => {
+  if (window.__RM_CONTINUITY_ROW_REFINEMENT__) return;
+  window.__RM_CONTINUITY_ROW_REFINEMENT__ = true;
+  const style=document.createElement('style');
+  style.id='rm-continuity-row-refinement';
+  style.textContent=`
+    .continuity-alert-row{
+      grid-template-columns:34px minmax(0,1fr) auto!important;
+      column-gap:9px!important;
+    }
+    .rm-continuity-row-icon{
+      width:34px!important;height:34px!important;
+      align-self:center!important;justify-self:center!important;
+      border-radius:12px!important;
+    }
+    .rm-continuity-row-icon .svg-icon,.rm-continuity-row-icon svg{
+      width:18px!important;height:18px!important;
+    }
+    .continuity-alert-row>span:nth-child(2){
+      min-width:0;display:flex!important;flex-direction:column!important;
+      align-items:flex-start!important;justify-content:center!important;
+      gap:3px!important;
+    }
+    .continuity-alert-row>span:nth-child(2)>strong,
+    .continuity-alert-row>span:nth-child(2)>small{
+      display:block!important;max-width:100%;
+    }
+    .continuity-alert-row>span:nth-child(2)>small{
+      white-space:nowrap!important;overflow:visible!important;
+      font-size:10.5px!important;line-height:1.2!important;
+      letter-spacing:-.01em;
+    }
+  `;
+  document.head.appendChild(style);
 })();
